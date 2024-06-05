@@ -1,1 +1,2 @@
-from tweedejaars_project import config  # noqa: F401
+from . import config  # noqa: F401
+from .data import fileloader  # noqa: F401

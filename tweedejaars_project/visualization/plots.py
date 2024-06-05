@@ -4,7 +4,7 @@ import typer
 from loguru import logger
 from tqdm import tqdm
 
-from tweedejaars_project.config import FIGURES_DIR, PROCESSED_DATA_DIR
+from ..config import FIGURES_DIR, PROCESSED_DATA_DIR, MAIN_DATA_FILE_NAME
 
 app = typer.Typer()
 
@@ -12,7 +12,7 @@ app = typer.Typer()
 @app.command()
 def main(
     # ---- REPLACE DEFAULT PATHS AS APPROPRIATE ----
-    input_path: Path = PROCESSED_DATA_DIR / "dataset.csv",
+    input_path: Path = PROCESSED_DATA_DIR / MAIN_DATA_FILE_NAME,
     output_path: Path = FIGURES_DIR / "plot.png",
     # -----------------------------------------
 ):

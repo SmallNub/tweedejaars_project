@@ -57,8 +57,8 @@ create_environment:
 
 ## Make Dataset
 .PHONY: data
-data: requirements
-	$(PYTHON_INTERPRETER) tweedejaars_project/data/make_dataset.py
+data:
+	$(PYTHON_INTERPRETER) make_dataset.py
 
 
 #################################################################################
