@@ -29,31 +29,43 @@ def get_splits(
     Returns:
         dict: A dictionary containing training, validation and test sets for features and targets.
     """
-    data = df[features + REQUIRED_COLUMNS]
-    test_date = get_split_date(data, 1 - TEST_PERCENTAGE)
-    train_val = 
+    df = df[features + REQUIRED_COLUMNS].copy()
 
-    # Prepare train data
-    train_features = train.drop([target] + NEEDED_COLUMNS, axis=1).reset_index(drop=True)
-    train_target = train[target].reset_index(drop=True)
-    train_ids = train["job_id"].reset_index(drop=True)
+    # Test set
+    test_date = get_split_date(df, 1 - test_percentage)
+    train_valid, test = split_on_date(df, test_date)
 
-    # Prepare test data
-    test_features = test.drop([target] + NEEDED_COLUMNS, axis=1).reset_index(drop=True)
-    test_target = test[target].reset_index(drop=True)
-    test_ids = test["job_id"].reset_index(drop=True)
+    # Training and validation set
+    valid_date = get_split_date(train_valid, 1 - valid_percentage)
+    train, valid = split_on_date(train_valid, valid_date)
 
-    # Store split data
-    split_data = {
-        "train": [train_features, train_target, train_ids],
-        "test": [test_features, test_target, test_ids]
+    # Get the pairs for each set
+    splits = {
+        'train': split_into_pair(train, features, target),
+        'valid': split_into_pair(valid, features, target),
+        'test': split_into_pair(test, features, target)
     }
 
-    return split_data
+    return splits
 
 
 def get_split_date(df: pd.DataFrame, split_percentage: float):
-    """Calculate the split date based on the given percentage of data."""
+    """Calculate the split date using the percentage, rounded to the nearest day."""
     idx = np.round((len(df['datetime']) * split_percentage))
-    date = df.loc[idx, 'datetime'].dt.round('D')
+    date = df.loc[idx, 'datetime'].round('D')
     return date
+
+
+def split_on_date(df: pd.DataFrame, split_date: str):
+    """Split the data using the split date."""
+    split_date = pd.to_datetime(split_date)
+    first = df[df['datetime'] < split_date].reset_index(drop=True)
+    second = df[df['datetime'] >= split_date].reset_index(drop=True)
+    return [first, second]
+
+
+def split_into_pair(df: pd.DataFrame, features: list[str], target: str):
+    """Split the data into pairs of input features and output targets."""
+    in_pair = df[features].reset_index(drop=True)
+    out_pair = df[target].reset_index(drop=True)
+    return [in_pair, out_pair]
