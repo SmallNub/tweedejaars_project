@@ -5,12 +5,13 @@ import pandas as pd
 VALID_PERCENTAGE = 0.25
 TEST_PERCENTAGE = 0.25
 
-# Target variable for training and testing
+# Target feature
 TARGET = 'target_two_sided_ptu'
 
+# Required features
 REQUIRED_COLUMNS = ['datetime', 'ptu_id', TARGET]
 
-# Features to be used for training and testing
+# Default features
 FEATURES = [
 
 ]
@@ -21,8 +22,9 @@ def get_splits(
     features: list[str] = FEATURES,
     target=TARGET,
     valid_percentage=VALID_PERCENTAGE,
-    test_percentage=TEST_PERCENTAGE
-) -> dict[list]:
+    test_percentage=TEST_PERCENTAGE,
+    return_dict=True
+) -> dict[list] | list[list]:
     """
     Split the data into training, validation and test sets for a single target variable.
 
@@ -46,7 +48,10 @@ def get_splits(
         'test': split_into_pair(test, features, target)
     }
 
-    return splits
+    if return_dict:
+        return splits
+
+    return list(splits.values())
 
 
 def get_split_date(df: pd.DataFrame, split_percentage: float):
