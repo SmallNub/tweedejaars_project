@@ -73,4 +73,5 @@ def split_into_pair(df: pd.DataFrame, features: list[str], target: str):
     """Split the data into pairs of input features and output targets."""
     in_pair = df[features].reset_index(drop=True)
     out_pair = df[target].reset_index(drop=True)
-    return [in_pair, out_pair]
+    id_pair = df['ptu_id'].reset_index(drop=True)
+    return [in_pair, out_pair, id_pair]
