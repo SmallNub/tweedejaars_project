@@ -17,6 +17,23 @@ def add_ids(df: pd.DataFrame):
     return df
 
 
+def add_alt_target(df: pd.DataFrame):
+    """Adds a column containing an alternative target, the first two minutes are also counted."""
+    df['target_two_sided_ptu_alt'] = df.groupby('ptu_id')['target_two_sided_ptu'].transform('any')
+    return df
+
+
+def add_realtime_target(df: pd.DataFrame):
+    """Adds a column containing a real-time version of the target."""
+    def detect_first_neg_to_pos(group):
+        change_detected = (group.shift(1) < 0) & (group > 0)
+        first_change = change_detected.cumsum().eq(1)
+        return first_change
+
+    df['target_two_sided_ptu_realtime'] = df.groupby('ptu_id')['settlement_price_bestguess'].transform(detect_first_neg_to_pos)
+    return df
+
+
 @app.command()
 def main(
     # ---- REPLACE DEFAULT PATHS AS APPROPRIATE ----
@@ -31,8 +48,13 @@ def main(
     for i in tqdm(range(10), total=10):
         if i == 0:
             df = add_ids(df)
-        if i == 5:
-            logger.info("Something happened for iteration 5.")
+            logger.info('Added id for each ptu. (ptu_id)')
+        if i == 1:
+            df = add_alt_target(df)
+            logger.info('Added alternative target. (target_two_sided_ptu_alt)')
+        # if i == 2:
+        #     df = add_realtime_target(df)
+        #     logger.info('Added realtime target. (target_two_sided_ptu_alt)')
 
     df = save_df(df, output_path)
     logger.success("Features generation complete.")

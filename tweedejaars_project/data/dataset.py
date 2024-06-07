@@ -22,8 +22,8 @@ def main(
     df = load_df(input_path)
 
     for i in tqdm(range(10), total=10):
-        if i == 5:
-            logger.info("Something happened for iteration 5.")
+        if i == 0:
+            logger.info("No steps, skipping.")
 
     df = save_df(df, output_path)
     logger.success("Processing dataset complete.")
