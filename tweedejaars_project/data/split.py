@@ -23,7 +23,8 @@ def get_splits(
     target=TARGET,
     valid_percentage=VALID_PERCENTAGE,
     test_percentage=TEST_PERCENTAGE,
-    return_dict=True
+    return_dict=True,
+    return_dict_pair=True,
 ) -> dict[list] | list[list]:
     """
     Split the data into training, validation and test sets for a single target variable.
@@ -43,9 +44,9 @@ def get_splits(
 
     # Get the pairs for each set
     splits = {
-        'train': split_into_pair(train, features, target),
-        'valid': split_into_pair(valid, features, target),
-        'test': split_into_pair(test, features, target)
+        'train': split_into_pair(train, features, target, return_dict_pair),
+        'valid': split_into_pair(valid, features, target, return_dict_pair),
+        'test': split_into_pair(test, features, target, return_dict_pair)
     }
 
     if return_dict:
@@ -69,9 +70,13 @@ def split_on_date(df: pd.DataFrame, split_date: str):
     return [first, second]
 
 
-def split_into_pair(df: pd.DataFrame, features: list[str], target: str):
+def split_into_pair(df: pd.DataFrame, features: list[str], target: str, return_dict=True):
     """Split the data into pairs of input features and output targets."""
     in_pair = df[features].reset_index(drop=True)
     out_pair = df[target].reset_index(drop=True)
     id_pair = df['ptu_id'].reset_index(drop=True)
+
+    if return_dict:
+        return {'in': in_pair, 'out': out_pair, 'id': id_pair}
+
     return [in_pair, out_pair, id_pair]
