@@ -26,8 +26,8 @@ def show_basic_metrics(true, pred, ids, flatten=True):
 def show_real_penalty_score(df: pd.DataFrame, true, pred, ids, example_revenue=False):
     """Calculates the penalty in revenue lost and gained."""
     df = df.copy()
-    df['min_price'] = df['settlement_price_bestguess']
-    df['max_price'] = df['settlement_price_bestguess']
+    df['min_price'] = df['min_price_published']
+    df['max_price'] = df['max_price_published']
     df['pred'] = pred
     df['id'] = ids
     df['true'] = true
@@ -58,11 +58,21 @@ def show_real_penalty_score(df: pd.DataFrame, true, pred, ids, example_revenue=F
 
     false_neg_penalty = flat_df['false_neg']
     false_pos_penalty = flat_df['false_pos']
+    false_neg_penalty_total = flat_df['has_impact_neg']
+    false_pos_penalty_total = flat_df['has_impact_pos']
 
     # Use the example revenue
     if example_revenue:
         energy = 100 / 60  # Example renewable energy
         false_neg_penalty *= flat_df['max_price'] * -energy
         false_pos_penalty *= flat_df['min_price'] * energy
+        false_neg_penalty_total *= flat_df['max_price'] * -energy
+        false_pos_penalty_total *= flat_df['min_price'] * energy
 
-    return false_neg_penalty.sum(), false_pos_penalty.sum()
+    false_neg_penalty_sum = false_neg_penalty.sum()
+    false_pos_penalty_sum = false_pos_penalty.sum()
+    false_neg_penalty_total_sum = false_neg_penalty_total.sum()
+    false_pos_penalty_total_sum = false_pos_penalty_total.sum()
+
+    print(f"{false_neg_penalty_sum} / {false_neg_penalty_total_sum}, {false_pos_penalty_sum} / {false_pos_penalty_total_sum}")
+    return false_neg_penalty_sum, false_neg_penalty_total_sum, false_pos_penalty_sum, false_pos_penalty_total_sum

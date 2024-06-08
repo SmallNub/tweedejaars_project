@@ -25,12 +25,13 @@ def add_alt_target(df: pd.DataFrame):
 
 def add_realtime_target(df: pd.DataFrame):
     """Adds a column containing a real-time version of the target."""
-    def detect_first_neg_to_pos(group):
-        change_detected = (group.shift(1) < 0) & (group > 0)
-        first_change = change_detected.cumsum().eq(1)
-        return first_change
+    df['target_two_sided_ptu_realtime'] = df['time_since_last_two_sided'] == 0
+    return df
 
-    df['target_two_sided_ptu_realtime'] = df.groupby('ptu_id')['settlement_price_bestguess'].transform(detect_first_neg_to_pos)
+
+def add_flip_target(df: pd.DataFrame):
+    """Adds a column containing when the ptu flipped to two-sided."""
+    df['target_two_sided_ptu_flip'] = df['target_two_sided_ptu_realtime'].diff() & df['target_two_sided_ptu_realtime']
     return df
 
 
@@ -52,9 +53,12 @@ def main(
         if i == 1:
             df = add_alt_target(df)
             logger.info('Added alternative target. (target_two_sided_ptu_alt)')
-        # if i == 2:
-        #     df = add_realtime_target(df)
-        #     logger.info('Added realtime target. (target_two_sided_ptu_alt)')
+        if i == 2:
+            df = add_realtime_target(df)
+            logger.info('Added realtime target. (target_two_sided_ptu_realtime)')
+        if i == 3:
+            df = add_flip_target(df)
+            logger.info('Added flip target. (target_two_sided_ptu_flip)')
 
     df = save_df(df, output_path)
     logger.success("Features generation complete.")
