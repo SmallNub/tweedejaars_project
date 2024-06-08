@@ -74,5 +74,5 @@ def show_real_penalty_score(df: pd.DataFrame, true, pred, ids, example_revenue=F
     false_neg_penalty_total_sum = false_neg_penalty_total.sum()
     false_pos_penalty_total_sum = false_pos_penalty_total.sum()
 
-    print(f"{false_neg_penalty_sum} / {false_neg_penalty_total_sum}, {false_pos_penalty_sum} / {false_pos_penalty_total_sum}")
+    print(f"{false_neg_penalty_sum}/{false_neg_penalty_total_sum}, {false_pos_penalty_sum}/{false_pos_penalty_total_sum}")
     return false_neg_penalty_sum, false_neg_penalty_total_sum, false_pos_penalty_sum, false_pos_penalty_total_sum
