@@ -22,7 +22,7 @@ def save_df(
 def load_model(file_name: str):
     """Load a model from a pickle file."""
     file_path = MODELS_DIR / file_name
-    with open(file_path) as file:
+    with open(file_path, 'rb') as file:
         model = pickle.load(file)
     return model
 
@@ -30,5 +30,5 @@ def load_model(file_name: str):
 def save_model(model, file_name: str):
     """Save a model to a pickle file."""
     file_path = MODELS_DIR / file_name
-    with open(file_path) as file:
+    with open(file_path, 'wb') as file:
         pickle.dump(model, file)
