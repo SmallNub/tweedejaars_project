@@ -2,7 +2,11 @@
 personal/
 
 # Data
-*.pkl
+data/external/*.pkl
+data/interim/*.pkl
+data/processed/*.pkl
+data/raw/*.pkl
+data/*.pkl
 *.csv
 
 # Mac OS-specific storage files
