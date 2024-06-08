@@ -1,5 +1,7 @@
 import pandas as pd
 
+from ..evaluation.adjustment import realtime_adjustment
+
 
 def flatten_ptu(df: pd.DataFrame):
     """Flatten the PTU for metrics."""
@@ -20,4 +22,13 @@ def flatten_ptu(df: pd.DataFrame):
 
     # Flatten
     df = df.groupby("ptu_id").agg(agg_dict).reset_index()
+    return df
+
+
+def detect_flip(df: pd.DataFrame, target: pd.Series, adjust=True):
+    """Detect when the PTU flips to two-sided."""
+    if adjust:
+        target = realtime_adjustment(df, target)
+
+    df['target_two_sided_ptu_flip'] = target.diff() & df['target_two_sided_ptu_realtime']
     return df

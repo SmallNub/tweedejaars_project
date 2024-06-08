@@ -2,10 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report, ConfusionMatrixDisplay
 
-from ..utility.flat import flatten_ptu
+from ..utility import flatten_ptu, detect_flip
 
 
-def show_basic_metrics(true, pred, ids, flatten=True):
+def show_basic_metrics(true: pd.Series, pred: pd.Series, ids: pd.Series, flatten=True):
     """Show basic metric performance, classification report and confusion matrix."""
     if flatten:
         # Concatenate the true, pred, and ids into a single DataFrame
@@ -23,7 +23,7 @@ def show_basic_metrics(true, pred, ids, flatten=True):
     plt.show()
 
 
-def show_real_penalty_score(df: pd.DataFrame, true, pred, ids, example_revenue=False):
+def show_real_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, ids: pd.Series, example_revenue=False):
     """Calculates the penalty in revenue lost and gained."""
     df = df.copy()
     df['min_price'] = df['min_price_published']
@@ -51,10 +51,9 @@ def show_real_penalty_score(df: pd.DataFrame, true, pred, ids, example_revenue=F
         'has_impact_pos': 'sum',    # Count total possible false positives
         'false_neg': 'sum',         # Count all the false negatives
         'false_pos': 'sum',         # Count all the false positives
-        'true': 'any'               # Is PTU two-sided
     }
     # Make it flat for easy calculations
-    flat_df = df.groupby('id').aggregate(agg_dict)
+    flat_df = df.groupby('id').agg(agg_dict)
 
     false_neg_penalty = flat_df['false_neg']
     false_pos_penalty = flat_df['false_pos']
@@ -76,3 +75,15 @@ def show_real_penalty_score(df: pd.DataFrame, true, pred, ids, example_revenue=F
 
     print(f"{false_neg_penalty_sum}/{false_neg_penalty_total_sum}, {false_pos_penalty_sum}/{false_pos_penalty_total_sum}")
     return false_neg_penalty_sum, false_neg_penalty_total_sum, false_pos_penalty_sum, false_pos_penalty_total_sum
+
+
+def compute_time_diff_flip(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
+    df.copy()
+    df['id'] = ids
+    df['flip'] = detect_flip(df, pred)
+    agg_dict = {
+        'flip': 'idxmax',
+        'target_two_sided_ptu_realtime': 'idxmax'
+    }
+    flat_df = df.groupby('id').agg(agg_dict)
+    

@@ -7,6 +7,7 @@ import pandas as pd
 
 from ..config import INTERIM_DATA_DIR, PROCESSED_DATA_DIR, MAIN_DATA_FILE_NAME
 from .fileloader import load_df, save_df
+from ..utility.misc import detect_flip
 
 app = typer.Typer()
 
@@ -31,7 +32,7 @@ def add_realtime_target(df: pd.DataFrame):
 
 def add_flip_target(df: pd.DataFrame):
     """Adds a column containing when the ptu flipped to two-sided."""
-    df['target_two_sided_ptu_flip'] = df['target_two_sided_ptu_realtime'].diff() & df['target_two_sided_ptu_realtime']
+    df['target_two_sided_ptu_flip'] = detect_flip(df, df['target_two_sided_ptu_realtime'], adjust=False)
     return df
 
 
