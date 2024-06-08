@@ -76,14 +76,40 @@ def show_real_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, 
     print(f"{false_neg_penalty_sum}/{false_neg_penalty_total_sum}, {false_pos_penalty_sum}/{false_pos_penalty_total_sum}")
     return false_neg_penalty_sum, false_neg_penalty_total_sum, false_pos_penalty_sum, false_pos_penalty_total_sum
 
-
+# TODO make it work better with adjustment
+# TODO fix it?
 def compute_time_diff_flip(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
     df.copy()
+    df['true'] = df['target_two_sided_ptu_realtime']
+    df['pred'] = pred
     df['id'] = ids
-    df['flip'] = detect_flip(df, pred)
+    df['flip'] = detect_flip(df, pred, False)
+
     agg_dict = {
-        'flip': 'idxmax',
-        'target_two_sided_ptu_realtime': 'idxmax'
+        'flip': 'idxmax',                           # The time it flips
+        'target_two_sided_ptu_realtime': 'idxmax',  # The time it has to flip
+        'true': 'any',                              # Is the PTU two-sided
+        'pred': 'any'                               # Prediction PTU two-sided
     }
     flat_df = df.groupby('id').agg(agg_dict)
-    
+
+    # True positives
+    true_pos_mask = flat_df['true'] & flat_df['pred']
+    true_pos_time = flat_df.loc[true_pos_mask, 'flip'] - flat_df.loc[true_pos_mask, 'target_two_sided_ptu_realtime']
+    true_pos_time_avg = true_pos_time.mean()
+    true_pos_count = true_pos_mask.sum()
+
+    # Split into positive and negative time differences
+    true_pos_time_mask = true_pos_time < 0
+    true_pos_time_neg = true_pos_time[true_pos_time_mask].describe()
+    true_pos_time_pos = true_pos_time[~true_pos_time_mask].describe()
+
+    # Best case scenario
+    true_time_avg = -flat_df.loc[flat_df['true'], 'target_two_sided_ptu_realtime'].mean()
+    true_count = flat_df['true'].sum()
+
+    time_df = pd.concat([true_pos_time_neg, true_pos_time_pos], axis=1)
+    time_df.columns = ['neg', 'pos']
+    print(time_df)
+    print(f"{true_pos_time_avg}/{true_time_avg}, {true_pos_count}/{true_count}")
+    return true_pos_time_neg, true_pos_time_pos, true_pos_time_avg, true_pos_count, true_time_avg, true_count
