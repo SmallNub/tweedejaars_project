@@ -81,9 +81,9 @@ def show_time_diff_score(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
     df.copy()
     df['start_idx'] = True
     df['true'] = df['target_two_sided_ptu_realtime']
-    df['pred'] = pred
+    df['pred'] = pd.Series(pred, dtype=bool)
     df['id'] = ids
-    df['flip'] = detect_flip(df, pred, False)
+    df['flip'] = detect_flip(df, df['pred'], False)
 
     agg_dict = {
         'start_idx': 'idxmax',                      # Get the start index of the PTU
