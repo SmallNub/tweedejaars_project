@@ -6,6 +6,9 @@ def flatten_ptu(df: pd.DataFrame):
     # Predefined possible operations
     base_agg_dict = {
         'target_two_sided_ptu': 'any',
+        'target_two_sided_ptu_alt': 'any',
+        'target_two_sided_ptu_realtime': 'any',
+        'target_two_sided_ptu_flip': 'any',
         'pred': 'any'
     }
 
@@ -13,14 +16,14 @@ def flatten_ptu(df: pd.DataFrame):
     agg_dict = {}
     for column in df.columns:
         if column in base_agg_dict:
-            agg_dict = base_agg_dict[column]
+            agg_dict[column] = base_agg_dict[column]
 
     if len(agg_dict) == 0:
         raise ValueError('Given DataFrame has no columns to flatten.')
 
     # Flatten
-    df = df.groupby("ptu_id").agg(agg_dict).reset_index()
-    return df
+    flat_df = df.groupby("ptu_id").agg(agg_dict).reset_index()
+    return flat_df
 
 
 def realtime_adjustment(df, pred):

@@ -77,15 +77,16 @@ def show_real_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, 
     return false_neg_penalty_sum, false_neg_penalty_total_sum, false_pos_penalty_sum, false_pos_penalty_total_sum
 
 # TODO make it work better with adjustment
-# TODO fix it?
 def compute_time_diff_flip(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
     df.copy()
+    df['start_idx'] = True
     df['true'] = df['target_two_sided_ptu_realtime']
     df['pred'] = pred
     df['id'] = ids
     df['flip'] = detect_flip(df, pred, False)
 
     agg_dict = {
+        'start_idx': 'idxmax',                      # Get the start index of the PTU
         'flip': 'idxmax',                           # The time it flips
         'target_two_sided_ptu_realtime': 'idxmax',  # The time it has to flip
         'true': 'any',                              # Is the PTU two-sided
@@ -105,7 +106,8 @@ def compute_time_diff_flip(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
     true_pos_time_pos = true_pos_time[~true_pos_time_mask].describe()
 
     # Best case scenario
-    true_time_avg = -flat_df.loc[flat_df['true'], 'target_two_sided_ptu_realtime'].mean()
+    true_time = flat_df.loc[flat_df['true'], 'start_idx'] - flat_df.loc[flat_df['true'], 'target_two_sided_ptu_realtime']
+    true_time_avg = true_time.mean()
     true_count = flat_df['true'].sum()
 
     time_df = pd.concat([true_pos_time_neg, true_pos_time_pos], axis=1)
