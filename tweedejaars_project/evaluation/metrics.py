@@ -77,7 +77,7 @@ def show_real_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, 
     return false_neg_penalty_sum, false_neg_penalty_total_sum, false_pos_penalty_sum, false_pos_penalty_total_sum
 
 # TODO make it work better with adjustment
-def compute_time_diff_flip(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
+def show_time_diff_score(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
     df.copy()
     df['start_idx'] = True
     df['true'] = df['target_two_sided_ptu_realtime']
