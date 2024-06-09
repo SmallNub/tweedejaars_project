@@ -83,7 +83,7 @@ def show_real_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, 
 
 # TODO make it work better with adjustment
 def show_time_diff_score(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
-    df.copy()
+    df = df.copy()
     df['start_idx'] = True
     df['true'] = df['target_two_sided_ptu_realtime']
     df['pred'] = pd.Series(pred, dtype=bool)
