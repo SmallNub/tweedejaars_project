@@ -74,11 +74,11 @@ def show_real_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, 
     false_pos_penalty_total_sum = false_pos_penalty_total.sum()
 
     # Invert it so it makes more logical sense
-    false_neg_penalty_sum = false_neg_penalty_total_sum - false_neg_penalty_sum
-    false_pos_penalty_sum = false_pos_penalty_total_sum - false_pos_penalty_sum
+    # false_neg_penalty_sum = false_neg_penalty_total_sum - false_neg_penalty_sum
+    # false_pos_penalty_sum = false_pos_penalty_total_sum - false_pos_penalty_sum
 
-    print(f"False negative score (pred/max): {false_neg_penalty_sum}/{false_neg_penalty_total_sum}")
-    print(f"False positive score (pred/max): {false_pos_penalty_sum}/{false_pos_penalty_total_sum}")
+    print(f"False negative score (pred/max): {false_neg_penalty_sum / false_neg_penalty_total_sum}, {false_neg_penalty_sum}/{false_neg_penalty_total_sum}")
+    print(f"False positive score (pred/max): {false_neg_penalty_sum / false_neg_penalty_total_sum}, {false_pos_penalty_sum}/{false_pos_penalty_total_sum}")
     # return false_neg_penalty_sum, false_neg_penalty_total_sum, false_pos_penalty_sum, false_pos_penalty_total_sum
 
 # TODO make it work better with adjustment
