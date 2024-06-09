@@ -28,7 +28,7 @@ def show_real_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, 
     df = df.copy()
     df['min_price'] = df['min_price_published']
     df['max_price'] = df['max_price_published']
-    df['pred'] = pred
+    df['pred'] = pd.Series(pred, dtype=bool)
     df['id'] = ids
     df['true'] = true
 
