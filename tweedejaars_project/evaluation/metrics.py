@@ -73,8 +73,13 @@ def show_real_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, 
     false_neg_penalty_total_sum = false_neg_penalty_total.sum()
     false_pos_penalty_total_sum = false_pos_penalty_total.sum()
 
-    print(f"{false_neg_penalty_sum}/{false_neg_penalty_total_sum}, {false_pos_penalty_sum}/{false_pos_penalty_total_sum}")
-    return false_neg_penalty_sum, false_neg_penalty_total_sum, false_pos_penalty_sum, false_pos_penalty_total_sum
+    # Invert it so it makes more logical sense
+    false_neg_penalty_sum = false_neg_penalty_total_sum - false_neg_penalty_sum
+    false_pos_penalty_sum = false_pos_penalty_total_sum - false_pos_penalty_sum
+
+    print(f"False negative score (pred/max): {false_neg_penalty_sum}/{false_neg_penalty_total_sum}")
+    print(f"False positive score (pred/max): {false_pos_penalty_sum}/{false_pos_penalty_total_sum}")
+    # return false_neg_penalty_sum, false_neg_penalty_total_sum, false_pos_penalty_sum, false_pos_penalty_total_sum
 
 # TODO make it work better with adjustment
 def show_time_diff_score(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
@@ -113,5 +118,5 @@ def show_time_diff_score(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
     time_df = pd.concat([true_pos_time_neg, true_pos_time_pos], axis=1)
     time_df.columns = ['neg', 'pos']
     print(time_df)
-    print(f"{true_pos_time_avg}/{true_time_avg}, {true_pos_count}/{true_count}")
-    return true_pos_time_neg, true_pos_time_pos, true_pos_time_avg, true_pos_count, true_time_avg, true_count
+    print(f"Time taken (pred/max): {true_pos_time_avg}/{true_time_avg}, using {true_pos_count}/{true_count}")
+    # return true_pos_time_neg, true_pos_time_pos, true_pos_time_avg, true_pos_count, true_time_avg, true_count
