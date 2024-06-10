@@ -1,6 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import pickle
+import os
 
 from ..config import PROCESSED_DATA_DIR, MAIN_DATA_FILE_NAME, MODELS_DIR
 
@@ -32,10 +33,14 @@ def load_model(file_name: str, folder=None):
 def save_model(model, file_name: str, folder=None):
     """Save a model to a pickle file."""
     file_name_ext = file_name + '.pkl'
-    if folder is None:
-        file_path = MODELS_DIR / file_name_ext
-    else:
-        file_path = MODELS_DIR / folder / file_name_ext
+    dir_path = MODELS_DIR
+
+    if folder is not None:
+        dir_path /= folder
+        if not os.path.exists(dir_path):
+            os.mkdir(dir_path)
+
+    file_path = dir_path / file_name_ext
 
     with open(file_path, 'wb') as file:
         pickle.dump(model, file)
