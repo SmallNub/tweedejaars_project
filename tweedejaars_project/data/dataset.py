@@ -42,7 +42,7 @@ def main(
 
     for i in tqdm(range(10), total=10):
         if i == 0:
-            df = fix_target(df)
+            # df = fix_target(df)
             logger.info("Fixed target_two_sided_ptu.")
 
     df = save_df(df, output_path)
