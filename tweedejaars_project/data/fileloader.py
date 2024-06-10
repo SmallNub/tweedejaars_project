@@ -19,20 +19,22 @@ def save_df(df: pd.DataFrame, file_path: Path = PROCESSED_DATA_DIR / MAIN_DATA_F
 
 def load_model(file_name: str, folder=None):
     """Load a model from a pickle file."""
-    file_name_ext = file_name + '.pkl'
-    if folder is None:
-        file_path = MODELS_DIR / file_name_ext
-    else:
-        file_path = MODELS_DIR / folder / file_name_ext
+    file_name_ext = file_name + ".pkl"
+    dir_path = MODELS_DIR
 
-    with open(file_path, 'rb') as file:
+    if folder is not None:
+        dir_path /= folder
+
+    file_path = dir_path / file_name_ext
+
+    with open(file_path, "rb") as file:
         model = pickle.load(file)
     return model
 
 
 def save_model(model, file_name: str, folder=None):
     """Save a model to a pickle file."""
-    file_name_ext = file_name + '.pkl'
+    file_name_ext = file_name + ".pkl"
     dir_path = MODELS_DIR
 
     if folder is not None:
@@ -42,5 +44,5 @@ def save_model(model, file_name: str, folder=None):
 
     file_path = dir_path / file_name_ext
 
-    with open(file_path, 'wb') as file:
+    with open(file_path, "wb") as file:
         pickle.dump(model, file)

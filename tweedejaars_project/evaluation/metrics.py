@@ -2,71 +2,78 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report, ConfusionMatrixDisplay
 
-from ..utility import flatten_ptu, detect_flip
+from tweedejaars_project.utility import flatten_ptu, print_cond
+from tweedejaars_project.evaluation import detect_flip, adjust_pred_realtime, adjust_pred_consistency
 
 
-def show_basic_metrics(true: pd.Series, pred: pd.Series, ids: pd.Series, flatten=True):
+def show_basic_metrics(true: pd.Series, pred: pd.Series, ids: pd.Series, flatten=True, show=True):
     """Show basic metric performance, classification report and confusion matrix."""
+    print_cond("BASIC METRICS", show)
     if flatten:
         # Concatenate the true, pred, and ids into a single DataFrame
-        base = pd.concat([pd.Series(true), pd.Series(pred), pd.Series(ids)], axis=1, ignore_index=True)
+        base = pd.concat([true, pred, ids], axis=1)
         base.columns = ["target_two_sided_ptu", "pred", "ptu_id"]
         base = flatten_ptu(base)
-        true = base['target_two_sided_ptu']
-        pred = base['pred']
+        true = base["target_two_sided_ptu"]
+        pred = base["pred"]
+        print("Flattened per PTU")
+    else:
+        print("Default")
 
-    print("Classification Report:")
+    print_cond("Classification Report", show)
     print(classification_report(true, pred))
 
-    print("Confusion Matrix:")
-    ConfusionMatrixDisplay.from_predictions(true, pred)
-    plt.show()
+    if show:
+        ConfusionMatrixDisplay.from_predictions(true, pred)
+        plt.title("Confusion Matrix")
+        plt.show()
 
 
-def show_real_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, ids: pd.Series, example_revenue=False):
+def show_real_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, ids: pd.Series, example_revenue=False, show=True):
     """Calculates the penalty in revenue lost and gained."""
+    print_cond("PENALTY SCORE", show)
     df = df.copy()
-    df['min_price'] = df['min_price_published']
-    df['max_price'] = df['max_price_published']
-    df['pred'] = pd.Series(pred, dtype=bool)
-    df['id'] = ids
-    df['true'] = true
+    df["min_price"] = df["min_price_published"]
+    df["max_price"] = df["max_price_published"]
+    df["pred"] = pred
+    df["id"] = ids
+    df["true"] = true
 
     # False negative with respect to naive strategy action
     # If it is a two-sided PTU and it curtails, it will be a false negative if the prediction is false
-    df['false_neg'] = False
-    df['has_impact_neg'] = df['true'] & df['naive_strategy_action']
-    df.loc[df['has_impact_neg'], 'false_neg'] = ~df.loc[df['has_impact_neg'], 'pred']
+    df["false_neg"] = False
+    df["has_impact_neg"] = df["true"] & df["naive_strategy_action"]
+    df.loc[df["has_impact_neg"], "false_neg"] = ~df.loc[df["has_impact_neg"], "pred"]
 
     # False positive with respect to naive strategy action
     # If it is a one-sided PTU and it curtails, it will be a false positive if the prediction is true
-    df['false_pos'] = False
-    df['has_impact_pos'] = ~df['true'] & df['naive_strategy_action']
-    df.loc[df['has_impact_pos'], 'false_pos'] = df.loc[df['has_impact_pos'], 'pred']
+    df["false_pos"] = False
+    df["has_impact_pos"] = ~df["true"] & df["naive_strategy_action"]
+    df.loc[df["has_impact_pos"], "false_pos"] = df.loc[df["has_impact_pos"], "pred"]
 
     agg_dict = {
-        'min_price': 'min',         # Min down price
-        'max_price': 'max',         # Max up price
-        'has_impact_neg': 'sum',    # Count total possible false negatives
-        'has_impact_pos': 'sum',    # Count total possible false positives
-        'false_neg': 'sum',         # Count all the false negatives
-        'false_pos': 'sum',         # Count all the false positives
+        "min_price": "min",         # Min down price
+        "max_price": "max",         # Max up price
+        "has_impact_neg": "sum",    # Count total possible false negatives
+        "has_impact_pos": "sum",    # Count total possible false positives
+        "false_neg": "sum",         # Count all the false negatives
+        "false_pos": "sum",         # Count all the false positives
     }
     # Make it flat for easy calculations
-    flat_df = df.groupby('id').agg(agg_dict)
+    flat_df = df.groupby("id").agg(agg_dict)
 
-    false_neg_penalty = flat_df['false_neg']
-    false_pos_penalty = flat_df['false_pos']
-    false_neg_penalty_total = flat_df['has_impact_neg']
-    false_pos_penalty_total = flat_df['has_impact_pos']
+    false_neg_penalty = flat_df["false_neg"]
+    false_pos_penalty = flat_df["false_pos"]
+    false_neg_penalty_total = flat_df["has_impact_neg"]
+    false_pos_penalty_total = flat_df["has_impact_pos"]
 
     # Use the example revenue
     if example_revenue:
         energy = 100 / 60  # Example renewable energy
-        false_neg_penalty *= flat_df['max_price'] * -energy
-        false_pos_penalty *= flat_df['min_price'] * energy
-        false_neg_penalty_total *= flat_df['max_price'] * -energy
-        false_pos_penalty_total *= flat_df['min_price'] * energy
+        false_neg_penalty *= flat_df["max_price"] * -energy
+        false_pos_penalty *= flat_df["min_price"] * energy
+        false_neg_penalty_total *= flat_df["max_price"] * -energy
+        false_pos_penalty_total *= flat_df["min_price"] * energy
 
     false_neg_penalty_sum = false_neg_penalty.sum()
     false_pos_penalty_sum = false_pos_penalty.sum()
@@ -77,31 +84,32 @@ def show_real_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, 
     # false_neg_penalty_sum = false_neg_penalty_total_sum - false_neg_penalty_sum
     # false_pos_penalty_sum = false_pos_penalty_total_sum - false_pos_penalty_sum
 
-    print(f"False negative score (pred/max): {false_neg_penalty_sum / false_neg_penalty_total_sum}, {false_neg_penalty_sum}/{false_neg_penalty_total_sum}")
-    print(f"False positive score (pred/max): {false_pos_penalty_sum / false_pos_penalty_total_sum}, {false_pos_penalty_sum}/{false_pos_penalty_total_sum}")
+    print_cond(f"False negative score (pred/max): {false_neg_penalty_sum / false_neg_penalty_total_sum}, {false_neg_penalty_sum}/{false_neg_penalty_total_sum}", show)
+    print_cond(f"False positive score (pred/max): {false_pos_penalty_sum / false_pos_penalty_total_sum}, {false_pos_penalty_sum}/{false_pos_penalty_total_sum}", show)
     # return false_neg_penalty_sum, false_neg_penalty_total_sum, false_pos_penalty_sum, false_pos_penalty_total_sum
 
-# TODO make it work better with adjustment
-def show_time_diff_score(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
-    df = df.copy()
-    df['start_idx'] = True
-    df['true'] = df['target_two_sided_ptu_realtime']
-    df['pred'] = pd.Series(pred, dtype=bool)
-    df['id'] = ids
-    df['flip'] = detect_flip(df, df['pred'], False)
 
+def show_time_diff_score(df: pd.DataFrame, pred: pd.Series, ids: pd.Series, show=True):
+    """Calculate the time delay between predictions and realtime."""
+    print_cond("TIME SCORE", show)
+    df = df.copy()
+    df["start_idx"] = True
+    df["true"] = df["target_two_sided_ptu_realtime"]
+    df["pred"] = pred
+    df["id"] = ids
+    df["flip"] = detect_flip(df["target_two_sided_ptu_realtime"], df["pred"])
     agg_dict = {
-        'start_idx': 'idxmax',                      # Get the start index of the PTU
-        'flip': 'idxmax',                           # The time it flips
-        'target_two_sided_ptu_realtime': 'idxmax',  # The time it has to flip
-        'true': 'any',                              # Is the PTU two-sided
-        'pred': 'any'                               # Prediction PTU two-sided
+        "start_idx": "idxmax",                      # Get the start index of the PTU
+        "flip": "idxmax",                           # The time it flips
+        "target_two_sided_ptu_realtime": "idxmax",  # The time it has to flip
+        "true": "any",                              # Is the PTU two-sided
+        "pred": "any"                               # Prediction PTU two-sided
     }
-    flat_df = df.groupby('id').agg(agg_dict)
+    flat_df = df.groupby("id").agg(agg_dict)
 
     # True positives
-    true_pos_mask = flat_df['true'] & flat_df['pred']
-    true_pos_time = flat_df.loc[true_pos_mask, 'flip'] - flat_df.loc[true_pos_mask, 'target_two_sided_ptu_realtime']
+    true_pos_mask = flat_df["true"] & flat_df["pred"]
+    true_pos_time = flat_df.loc[true_pos_mask, "flip"] - flat_df.loc[true_pos_mask, "target_two_sided_ptu_realtime"]
     true_pos_time_avg = true_pos_time.mean()
     true_pos_count = true_pos_mask.sum()
 
@@ -111,12 +119,36 @@ def show_time_diff_score(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
     true_pos_time_pos = true_pos_time[~true_pos_time_mask].describe()
 
     # Best case scenario
-    true_time = flat_df.loc[flat_df['true'], 'start_idx'] - flat_df.loc[flat_df['true'], 'target_two_sided_ptu_realtime']
+    true_time = flat_df.loc[flat_df["true"], "start_idx"] - flat_df.loc[flat_df["true"], "target_two_sided_ptu_realtime"]
     true_time_avg = true_time.mean()
-    true_count = flat_df['true'].sum()
+    true_count = flat_df["true"].sum()
 
     time_df = pd.concat([true_pos_time_neg, true_pos_time_pos], axis=1)
-    time_df.columns = ['neg', 'pos']
-    print(time_df)
-    print(f"Time taken (pred/max): {true_pos_time_avg}/{true_time_avg}, using {true_pos_count}/{true_count}")
+    time_df.columns = ["neg", "pos"]
+    print_cond(time_df, show)
+    print_cond(f"Time taken (pred/max): {true_pos_time_avg}/{true_time_avg}, using {true_pos_count}/{true_count}", show)
     # return true_pos_time_neg, true_pos_time_pos, true_pos_time_avg, true_pos_count, true_time_avg, true_count
+
+
+def show_metrics(df: pd.DataFrame, true: pd.Series, pred: pd.Series, ids: pd.Series):
+    show_basic_metrics(true, pred, ids, False)
+    show_basic_metrics(true, pred, ids)
+    show_real_penalty_score(df, true, pred, ids)
+    show_time_diff_score(df, pred, ids)
+
+
+def show_metrics_adjusted(df: pd.DataFrame, true: pd.Series, pred: pd.Series, ids: pd.Series, version="target"):
+    print("Base")
+    show_metrics(df, true, pred, ids)
+
+    print("Adjusted with realtime")
+    real_pred = adjust_pred_realtime(df[f"{version}_two_sided_ptu_realtime"], pred)
+    show_metrics(df, true, real_pred, ids)
+
+    print("Adjusted with consistency")
+    con_pred = adjust_pred_consistency(pred, ids)
+    show_metrics(df, true, con_pred, ids)
+
+    print("Adjusted with consistency and realtime")
+    real_con_pred = adjust_pred_realtime(df[f"{version}_two_sided_ptu_realtime"], con_pred)
+    show_metrics(df, true, real_con_pred, ids)
