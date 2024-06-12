@@ -4,7 +4,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 from tweedejaars_project.utility import flatten_ptu, get_submatrix
 from tweedejaars_project.evaluation import detect_flip, adjust_pred_realtime, adjust_pred_consistency
 from tweedejaars_project.visualization import default_titles, make_subplots, \
-    plot_classification_report, plot_confusion_matrix, plot_penalty_score, plot_time_diff_df, plot_time_diff_avg
+    plot_classification_report, plot_confusion_matrix, plot_penalty_score, plot_time_diff_df, plot_time_diff_avg, plot_income_score
 
 
 def compute_basic_metrics(true: pd.Series, pred: pd.Series, ids: pd.Series, flatten=True):
@@ -59,6 +59,7 @@ def show_basic_metrics(true: pd.Series, pred: pd.Series, ids: pd.Series, flatten
 
 def compute_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, ids: pd.Series, example_revenue=False):
     """Calculates the penalty in revenue lost and gained."""
+    energy = 100 / 60  # Example renewable energy
     df = df.copy()
     df["min_price"] = df["min_price_published"]
     df["max_price"] = df["max_price_published"]
@@ -96,7 +97,6 @@ def compute_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, id
 
     # Use the example revenue
     if example_revenue:
-        energy = 100 / 60  # Example renewable energy
         false_neg_penalty *= flat_df["max_price"] * -energy
         false_pos_penalty *= flat_df["min_price"] * energy
         false_neg_penalty_total *= flat_df["max_price"] * -energy
@@ -106,8 +106,24 @@ def compute_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, id
     false_pos_penalty_sum = false_pos_penalty.sum()
     false_neg_penalty_total_sum = false_neg_penalty_total.sum()
     false_pos_penalty_total_sum = false_pos_penalty_total.sum()
+    penalty = [false_neg_penalty_sum, false_neg_penalty_total_sum, false_pos_penalty_sum, false_pos_penalty_total_sum]
 
-    return false_neg_penalty_sum, false_neg_penalty_total_sum, false_pos_penalty_sum, false_pos_penalty_total_sum
+    # Income metrics from the email
+    # Ignore two-sided PTU
+    naive_income = energy * df.loc[df["naive_strategy_action"], "settlement_price_realized"].sum()
+
+    # Use predictions
+    naive_income_model = energy * df.loc[df["naive_strategy_action"] & df["pred"], "settlement_price_realized"].sum()
+
+    # Use the target
+    best_income = energy * df.loc[df["naive_strategy_action"] & df["true"], "settlement_price_realized"].sum()
+
+    # Calculate add value
+    added_value = naive_income_model - naive_income
+    added_value_best = best_income - naive_income
+    revenue = [naive_income, naive_income_model, added_value, best_income, added_value_best]
+
+    return penalty, revenue
 
 
 def print_penalty_score(results, titles=None):
@@ -116,11 +132,20 @@ def print_penalty_score(results, titles=None):
 
     # Create subplots for penalty scores
     make_subplots(
-        plot_penalty_score,
+        lambda result, title, ax: plot_penalty_score(result[0], title, ax),
         results,
         titles,
         suptitle="Comparison of Penalty Scores",
         figsize=(18, 2)
+    )
+
+    # Create subplots for income scores
+    make_subplots(
+        lambda result, title, ax: plot_income_score(result[1], title, ax),
+        results,
+        titles,
+        suptitle="Comparison of Income Scores",
+        figsize=(18, 3)
     )
 
 

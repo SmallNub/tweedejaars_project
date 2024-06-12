@@ -39,29 +39,33 @@ def show_subplots(fig, title):
     plt.show()
 
 
-def plot_df(df, title, ax):
+def plot_df(df, title, ax, text=None):
     """Custom table plot for a small df."""
-    ax.axis('tight')
-    ax.axis('off')
-    table = ax.table(cellText=df.values.round(2), colLabels=df.columns, rowLabels=df.index, loc='center')
+    ax.axis("tight")
+    ax.axis("off")
+    table = ax.table(cellText=df.values.round(2), colLabels=df.columns, rowLabels=df.index, loc="center")
     table.auto_set_font_size(False)
     table.set_fontsize(10)
     table.scale(1, 1.3)
     ax.set_title(title)
 
+    if text is not None:
+        # Add additional text below the table
+        ax.text(0.5, 0.2, text, ha='center', va='top', transform=ax.transAxes, fontsize=12)
+
 
 def plot_classification_report(report, title, ax):
     """Custom plot for a classification report."""
     classes = list(report.keys())
-    metrics = ['precision', 'recall', 'f1-score', 'support']
+    metrics = ["precision", "recall", "f1-score", "support"]
 
     data = []
     for cls in classes:
         row = []
         if isinstance(report[cls], dict):
             for metric in metrics:
-                row.append(report[cls].get(metric, ''))
-        else:  # for 'accuracy'
+                row.append(report[cls].get(metric, ""))
+        else:  # for "accuracy"
             row = [report[cls]] * 4
         data.append(row)
 
@@ -71,7 +75,7 @@ def plot_classification_report(report, title, ax):
 
 def plot_confusion_matrix(cm, title, ax):
     """Plot a confusion matrix."""
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['False', 'True'])
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["False", "True"])
     disp.plot(ax=ax, colorbar=False)
     ax.set_title(title)
 
@@ -79,11 +83,21 @@ def plot_confusion_matrix(cm, title, ax):
 def plot_penalty_score(score, title, ax):
     """Plot penalty score."""
     index_names = ["False neg", "False pos"]
-    column_names = ["Percentage", "Pred", "Max"]
+    column_names = ["Percentage", "Prediction", "Maximum"]
     data = [[score[0] / score[1], score[0], score[1]],
             [score[2] / score[3], score[2], score[3]]]
     df = pd.DataFrame(data, columns=column_names, index=index_names)
     plot_df(df, title, ax)
+
+
+def plot_income_score(score, title, ax):
+    """Plot income score."""
+    index_names = ["Prediction", "Maximum"]
+    column_names = ["Naive income", "Model income", "Added value"]
+    data = [[score[0], score[1], score[2]],
+            [score[0], score[3], score[4]]]
+    df = pd.DataFrame(data, columns=column_names, index=index_names)
+    plot_df(df, title, ax, f"Added value percentage to max: {score[2] / score[4]:.3f}")
 
 
 def plot_time_diff_df(score, title, ax):
