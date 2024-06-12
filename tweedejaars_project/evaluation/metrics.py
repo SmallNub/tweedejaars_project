@@ -7,14 +7,16 @@ from tweedejaars_project.visualization import default_titles, make_subplots, \
     plot_classification_report, plot_confusion_matrix, plot_penalty_score, plot_time_diff_df, plot_time_diff_avg, plot_income_score
 
 
-def compute_basic_metrics(true: pd.Series, pred: pd.Series, ids: pd.Series, flatten=True):
+def compute_basic_metrics(df: pd.DataFrame, pred: pd.Series, flatten=True, version="target"):
     """Compute basic metric performance, classification report and confusion matrix."""
+    true = df[f"{version}_two_sided_ptu"]
+
     if flatten:
         # Concatenate the true, pred, and ids into a single DataFrame
-        base = pd.concat([true, pred, ids], axis=1)
-        base.columns = ["target_two_sided_ptu", "pred", "ptu_id"]
+        base = pd.concat([df[f"{version}_two_sided_ptu"], pred, df["ptu_id"]], axis=1)
+        base.columns = [f"{version}_two_sided_ptu", "pred", "ptu_id"]
         base = flatten_ptu(base)
-        true = base["target_two_sided_ptu"]
+        true = base[f"{version}_two_sided_ptu"]
         pred = base["pred"]
 
     report = classification_report(true, pred, output_dict=True)
@@ -51,21 +53,20 @@ def print_basic_metrics(results, titles=None):
     )
 
 
-def show_basic_metrics(true: pd.Series, pred: pd.Series, ids: pd.Series, flatten=True):
+def show_basic_metrics(df: pd.DataFrame, pred: pd.Series, flatten=True, version="target"):
     """Show basic metric performance, classification report and confusion matrix."""
-    results = compute_basic_metrics(true, pred, ids, flatten)
+    results = compute_basic_metrics(df, pred, flatten, version)
     print_basic_metrics(results)
 
 
-def compute_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, ids: pd.Series, example_revenue=False):
+def compute_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=False, version="target"):
     """Calculates the penalty in revenue lost and gained."""
     energy = 100 / 60  # Example renewable energy
     df = df.copy()
     df["min_price"] = df["min_price_published"]
     df["max_price"] = df["max_price_published"]
     df["pred"] = pred
-    df["id"] = ids
-    df["true"] = true
+    df["true"] = df[f"{version}_two_sided_ptu"]
 
     # False negative with respect to naive strategy action
     # If it is a two-sided PTU and it curtails, it will be a false negative if the prediction is false
@@ -88,7 +89,7 @@ def compute_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, id
         "false_pos": "sum",         # Count all the false positives
     }
     # Make it flat for easy calculations
-    flat_df = df.groupby("id").agg(agg_dict)
+    flat_df = df.groupby("ptu_id").agg(agg_dict)
 
     false_neg_penalty = flat_df["false_neg"]
     false_pos_penalty = flat_df["false_pos"]
@@ -149,32 +150,31 @@ def print_penalty_score(results, titles=None):
     )
 
 
-def show_penalty_score(df: pd.DataFrame, true: pd.Series, pred: pd.Series, ids: pd.Series, example_revenue=False):
+def show_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=False, version="target"):
     """Show the penalty metric."""
-    results = compute_penalty_score(df, true, pred, ids, example_revenue)
+    results = compute_penalty_score(df, pred, example_revenue, version)
     print_penalty_score(results)
 
 
-def compute_time_diff_score(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
+def compute_time_diff_score(df: pd.DataFrame, pred: pd.Series, version="target"):
     """Calculate the time delay between predictions and realtime."""
     df = df.copy()
     df["start_idx"] = True
-    df["true"] = df["target_two_sided_ptu_realtime"]
+    df["true"] = df[f"{version}_two_sided_ptu"]
     df["pred"] = pred
-    df["id"] = ids
-    df["flip"] = detect_flip(df["target_two_sided_ptu_realtime"], df["pred"])
+    df["flip"] = detect_flip(df[f"{version}_two_sided_ptu_realtime"], df["pred"])
     agg_dict = {
-        "start_idx": "idxmax",                      # Get the start index of the PTU
-        "flip": "idxmax",                           # The time it flips
-        "target_two_sided_ptu_realtime": "idxmax",  # The time it has to flip
-        "true": "any",                              # Is the PTU two-sided
-        "pred": "any"                               # Prediction PTU two-sided
+        "start_idx": "idxmax",                          # Get the start index of the PTU
+        "flip": "idxmax",                               # The time it flips
+        f"{version}_two_sided_ptu_realtime": "idxmax",  # The time it has to flip
+        "true": "any",                                  # Is the PTU two-sided
+        "pred": "any"                                   # Prediction PTU two-sided
     }
-    flat_df = df.groupby("id").agg(agg_dict)
+    flat_df = df.groupby("ptu_id").agg(agg_dict)
 
     # True positives
     true_pos_mask = flat_df["true"] & flat_df["pred"]
-    true_pos_time = flat_df.loc[true_pos_mask, "flip"] - flat_df.loc[true_pos_mask, "target_two_sided_ptu_realtime"]
+    true_pos_time = flat_df.loc[true_pos_mask, "flip"] - flat_df.loc[true_pos_mask, f"{version}_two_sided_ptu_realtime"]
     true_pos_time_avg = true_pos_time.mean()
     true_pos_count = true_pos_mask.sum()
 
@@ -184,7 +184,7 @@ def compute_time_diff_score(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
     true_pos_time_pos = true_pos_time[~true_pos_time_mask].describe()
 
     # Best case scenario
-    true_time = flat_df.loc[flat_df["true"], "start_idx"] - flat_df.loc[flat_df["true"], "target_two_sided_ptu_realtime"]
+    true_time = flat_df.loc[flat_df["true"], "start_idx"] - flat_df.loc[flat_df["true"], f"{version}_two_sided_ptu_realtime"]
     true_time_avg = true_time.mean()
     true_count = flat_df["true"].sum()
 
@@ -217,19 +217,19 @@ def print_time_diff_score(results, titles=None):
     )
 
 
-def show_time_diff_score(df: pd.DataFrame, pred: pd.Series, ids: pd.Series):
+def show_time_diff_score(df: pd.DataFrame, pred: pd.Series, version="target"):
     """Show the time metric."""
-    results = compute_time_diff_score(df, pred, ids)
+    results = compute_time_diff_score(df, pred, version)
     print_time_diff_score(results)
 
 
-def compute_metrics(df: pd.DataFrame, true: pd.Series, pred: pd.Series, ids: pd.Series):
+def compute_metrics(df: pd.DataFrame, pred: pd.Series, version="target"):
     """Show every metric."""
     results = []
-    results.append(compute_basic_metrics(true, pred, ids, False))
-    results.append(compute_basic_metrics(true, pred, ids))
-    results.append(compute_penalty_score(df, true, pred, ids))
-    results.append(compute_time_diff_score(df, pred, ids))
+    results.append(compute_basic_metrics(df, pred, False, version))
+    results.append(compute_basic_metrics(df, pred, version))
+    results.append(compute_penalty_score(df, pred, version))
+    results.append(compute_time_diff_score(df, pred, version))
     return results
 
 
@@ -241,32 +241,32 @@ def print_metrics(results):
     print_time_diff_score(results[3])
 
 
-def show_metrics(df: pd.DataFrame, true: pd.Series, pred: pd.Series, ids: pd.Series):
+def show_metrics(df: pd.DataFrame, pred: pd.Series, version="target"):
     """Show every metric."""
-    results = compute_metrics(df, true, pred, ids)
+    results = compute_metrics(df, pred, version)
     print_metrics(results)
 
 
-def show_metrics_multi(df: pd.DataFrame, true: pd.Series, preds: list[pd.Series], ids: pd.Series, titles=None):
+def show_metrics_multi(df: pd.DataFrame, preds: list[pd.Series], titles=None, version="target"):
     """Show every metric for every prediction."""
-    results = [compute_metrics(df, true, pred, ids) for pred in preds]
+    results = [compute_metrics(df, pred, version) for pred in preds]
     print_basic_metrics(get_submatrix(results, col_start=0, col_end=1, auto_flat=True), titles)
     print_basic_metrics(get_submatrix(results, col_start=1, col_end=2, auto_flat=True), titles)
     print_penalty_score(get_submatrix(results, col_start=2, col_end=3, auto_flat=True), titles)
     print_time_diff_score(get_submatrix(results, col_start=3, col_end=4, auto_flat=True), titles)
 
 
-def show_metrics_adjusted(df: pd.DataFrame, true: pd.Series, pred: pd.Series, ids: pd.Series, version="target"):
+def show_metrics_adjusted(df: pd.DataFrame, pred: pd.Series, version="target"):
     """Show every metric for every adjustment."""
     # Adjusted with realtime
     pred_real = adjust_pred_realtime(df[f"{version}_two_sided_ptu_realtime"], pred)
 
     # Adjusted with consistency
-    pred_con = adjust_pred_consistency(pred, ids)
+    pred_con = adjust_pred_consistency(pred, df["ptu_id"])
 
     # Adjusted with consistency and realtime
     pred_con_real = adjust_pred_realtime(df[f"{version}_two_sided_ptu_realtime"], pred_con)
 
     preds = [pred, pred_real, pred_con, pred_con_real]
     titles = ["Base", "Adjusted Real-time", "Adjusted Consistency", "Adjusted Consistency + Real-time"]
-    show_metrics_multi(df, true, preds, ids, titles)
+    show_metrics_multi(df, preds, titles, version)
