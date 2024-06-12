@@ -8,6 +8,29 @@ def print_cond(msg, cond):
         print(msg)
 
 
+def get_submatrix(matrix, row_start=None, row_end=None, col_start=None, col_end=None, auto_flat=False):
+    """Get a submatrix from a 2D list, handling empty slice arguments."""
+    if row_start is None:
+        row_start = 0
+    if row_end is None:
+        row_end = len(matrix)
+    if col_start is None:
+        col_start = 0
+    if col_end is None:
+        col_end = len(matrix[0])
+
+    if auto_flat:
+        if row_end - row_start == 1:
+            if col_end - col_start == 1:
+                return [row[col_start] for row in matrix[row_start]]
+            else:
+                return [row[col_start:col_end] for row in matrix[row_start]]
+        elif col_end - col_start == 1:
+            return [row[col_start] for row in matrix[row_start:row_end]]
+
+    return [row[col_start:col_end] for row in matrix[row_start:row_end]]
+
+
 def recast_pred(pred: np.ndarray):
     """Recast the predictions into a series object."""
     return pd.Series(pred, dtype=bool, name="pred")

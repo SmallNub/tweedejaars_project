@@ -8,9 +8,6 @@ TEST_PERCENTAGE = 0.25
 # Target feature
 TARGET = "target_two_sided_ptu"
 
-# Required features
-REQUIRED_COLUMNS = ["datetime", "ptu_id"]
-
 # Default features
 FEATURES = [
 
