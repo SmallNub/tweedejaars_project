@@ -1,1 +1,1 @@
-from .misc import flatten_ptu, print_cond, recast_pred
+from .misc import flatten_ptu, print_cond, recast_pred, get_submatrix
