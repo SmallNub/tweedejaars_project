@@ -235,6 +235,7 @@ dependencies:
   - nss=3.100=hca3bf56_0
   - numpy=1.26.4=py312h2809609_0
   - numpy-base=1.26.4=py312he1a6c75_0
+  - openblas=0.3.27=pthreads_h7a3da1a_0
   - openjpeg=2.5.2=h488ebb8_0
   - openssl=3.3.0=h4ab18f5_3
   - orc=1.7.4=hb3bc3d3_1
