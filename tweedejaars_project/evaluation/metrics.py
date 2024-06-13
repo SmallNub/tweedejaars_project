@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix
 
 from tweedejaars_project.utility import flatten_ptu, get_submatrix
-from tweedejaars_project.evaluation import detect_flip, adjust_pred_realtime, adjust_pred_consistency
+from tweedejaars_project.evaluation import detect_flip, adjust_pred_realtime, adjust_pred_consistency, adjust_pred_conform
 from tweedejaars_project.visualization import default_titles, make_subplots, \
     plot_classification_report, plot_confusion_matrix, plot_penalty_score, plot_time_diff_df, plot_time_diff_avg, plot_income_score
 
@@ -49,7 +49,7 @@ def print_basic_metrics(results, titles=None):
         results,
         titles,
         suptitle=f"Comparison of Confusion Matrices - {"Flattened per PTU" if flat else "Default"}",
-        figsize=(18, 5)
+        figsize=(18, 2)
     )
 
 
@@ -137,7 +137,7 @@ def print_penalty_score(results, titles=None):
         results,
         titles,
         suptitle="Comparison of Penalty Scores",
-        figsize=(18, 2)
+        figsize=(18, 3)
     )
 
     # Create subplots for income scores
@@ -228,7 +228,7 @@ def compute_metrics(df: pd.DataFrame, pred: pd.Series, version="target"):
     results = []
     results.append(compute_basic_metrics(df, pred, False, version))
     results.append(compute_basic_metrics(df, pred, version))
-    results.append(compute_penalty_score(df, pred, version))
+    results.append(compute_penalty_score(df, pred, True, version))
     results.append(compute_time_diff_score(df, pred, version))
     return results
 
@@ -268,5 +268,6 @@ def show_metrics_adjusted(df: pd.DataFrame, pred: pd.Series, version="target"):
     pred_con_real = adjust_pred_realtime(df[f"{version}_two_sided_ptu_realtime"], pred_con)
 
     preds = [pred, pred_real, pred_con, pred_con_real]
+    preds = [adjust_pred_conform(p, df["ptu_id"]) for p in preds]
     titles = ["Base", "Adjusted Real-time", "Adjusted Consistency", "Adjusted Consistency + Real-time"]
     show_metrics_multi(df, preds, titles, version)

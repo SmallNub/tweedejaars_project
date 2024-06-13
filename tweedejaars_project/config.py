@@ -2,6 +2,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from loguru import logger
+import matplotlib.pyplot as plt
 
 # Load environment variables from .env file if it exists
 load_dotenv()
@@ -22,6 +23,10 @@ MODELS_DIR = PROJ_ROOT / "models"
 
 REPORTS_DIR = PROJ_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
+
+# Set the font globally to a monospaced font
+plt.rcParams['font.family'] = 'monospace'
+plt.rcParams['font.monospace'] = ['Courier New', 'Consolas', 'DejaVu Sans Mono']
 
 # If tqdm is installed, configure loguru with tqdm.write
 # https://github.com/Delgan/loguru/issues/135

@@ -1,6 +1,6 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import ConfusionMatrixDisplay
 
 
 def default_titles(results, titles):
@@ -43,10 +43,11 @@ def plot_df(df, title, ax, text=None):
     """Custom table plot for a small df."""
     ax.axis("tight")
     ax.axis("off")
-    table = ax.table(cellText=df.values.round(2), colLabels=df.columns, rowLabels=df.index, loc="center")
+    df = df.map(lambda x: f"{np.round(x, 2):.2f}")
+    table = ax.table(cellText=df.values, colLabels=df.columns, rowLabels=df.index, loc="center")
     table.auto_set_font_size(False)
     table.set_fontsize(10)
-    table.scale(1, 1.3)
+    table.scale(1.1, 1.3)
     ax.set_title(title)
 
     if text is not None:
@@ -75,19 +76,22 @@ def plot_classification_report(report, title, ax):
 
 def plot_confusion_matrix(cm, title, ax):
     """Plot a confusion matrix."""
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["False", "True"])
-    disp.plot(ax=ax, colorbar=False)
-    ax.set_title(title)
+    index_names = ["False", "True"]
+    column_names = ["False", "True"]
+    data = cm
+    df = pd.DataFrame(data, columns=column_names, index=index_names)
+    plot_df(df, title, ax)
 
 
 def plot_penalty_score(score, title, ax):
     """Plot penalty score."""
-    index_names = ["False neg", "False pos"]
+    index_names = ["False neg", "False pos", "Total"]
     column_names = ["Percentage", "Prediction", "Maximum"]
     data = [[score[0] / score[1], score[0], score[1]],
-            [score[2] / score[3], score[2], score[3]]]
+            [score[2] / score[3], score[2], score[3]],
+            [(score[0] + score[2]) / (score[1] + score[3]), score[0] + score[2], score[1] + score[3]]]
     df = pd.DataFrame(data, columns=column_names, index=index_names)
-    plot_df(df, title, ax)
+    plot_df(df, title, ax, "0 is no penalty, max is max penalty")
 
 
 def plot_income_score(score, title, ax):
@@ -116,4 +120,4 @@ def plot_time_diff_avg(score, title, ax):
     data = [[score[0], score[1]],
             [score[2], score[3]]]
     df = pd.DataFrame(data, columns=column_names, index=index_names)
-    plot_df(df, title, ax)
+    plot_df(df, title, ax, "More neg is better")
