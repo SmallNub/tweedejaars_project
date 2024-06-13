@@ -228,7 +228,7 @@ def compute_metrics(df: pd.DataFrame, pred: pd.Series, version="target"):
     results = []
     results.append(compute_basic_metrics(df, pred, False, version))
     results.append(compute_basic_metrics(df, pred, version))
-    results.append(compute_penalty_score(df, pred, version))
+    results.append(compute_penalty_score(df, pred, False, version))
     results.append(compute_time_diff_score(df, pred, version))
     return results
 

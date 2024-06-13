@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import ConfusionMatrixDisplay
 
@@ -43,10 +44,11 @@ def plot_df(df, title, ax, text=None):
     """Custom table plot for a small df."""
     ax.axis("tight")
     ax.axis("off")
-    table = ax.table(cellText=df.values.round(2), colLabels=df.columns, rowLabels=df.index, loc="center")
+    df = df.map(lambda x: f"{np.round(x, 2):.2f}")
+    table = ax.table(cellText=df.values, colLabels=df.columns, rowLabels=df.index, loc="center")
     table.auto_set_font_size(False)
     table.set_fontsize(10)
-    table.scale(1, 1.3)
+    table.scale(1.1, 1.3)
     ax.set_title(title)
 
     if text is not None:
