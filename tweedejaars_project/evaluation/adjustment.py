@@ -13,7 +13,7 @@ def adjust_pred_consistency(pred: pd.Series, ids: pd.Series):
     """
     df = pd.concat([pred, ids], axis=1)
     df.columns = ["pred", "id"]
-    df["pred"] = df.groupby("id")["pred"].transform("any")
+    df["pred"] = df.groupby("id")["pred"].transform("cummax")
     return df["pred"]
 
 
