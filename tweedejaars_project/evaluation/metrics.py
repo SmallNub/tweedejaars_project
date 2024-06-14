@@ -59,7 +59,7 @@ def show_basic_metrics(df: pd.DataFrame, pred: pd.Series, flatten=True, version=
     print_basic_metrics(results)
 
 
-def compute_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=False, version="target"):
+def compute_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=True, version="target"):
     """Calculates the penalty in revenue lost and gained."""
     energy = 100 / 60  # Example renewable energy
     df = df.copy()
@@ -103,28 +103,44 @@ def compute_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=Fal
         false_neg_penalty_total *= flat_df["max_price"] * -energy
         false_pos_penalty_total *= flat_df["min_price"] * energy
 
+    # Calculate values
     false_neg_penalty_sum = false_neg_penalty.sum()
     false_pos_penalty_sum = false_pos_penalty.sum()
     false_neg_penalty_total_sum = false_neg_penalty_total.sum()
     false_pos_penalty_total_sum = false_pos_penalty_total.sum()
-    penalty = [false_neg_penalty_sum, false_neg_penalty_total_sum, false_pos_penalty_sum, false_pos_penalty_total_sum]
+    false_sum_penalty = false_neg_penalty_sum + false_pos_penalty_sum
+    false_sum_penalty_total = false_neg_penalty_total_sum + false_pos_penalty_total_sum
+
+    # Create table
+    penalty = [[false_neg_penalty_sum / false_neg_penalty_total_sum, false_neg_penalty_sum, false_neg_penalty_total_sum],
+               [false_pos_penalty_sum / false_pos_penalty_total_sum, false_pos_penalty_sum, false_pos_penalty_total_sum],
+               [false_sum_penalty / false_sum_penalty_total, false_sum_penalty, false_sum_penalty_total]]
+
+    penalty_df = pd.DataFrame(penalty)
+    penalty_df.columns = ["pred", "max", "perc"]
 
     # Income metrics from the email
     # Ignore two-sided PTU
-    naive_income = energy * df.loc[df["naive_strategy_action"], "settlement_price_realized"].sum()
+    naive_income = -energy * df.loc[df["naive_strategy_action"], "settlement_price_realized"].sum()
 
     # Use predictions
-    naive_income_model = energy * df.loc[df["naive_strategy_action"] & df["pred"], "settlement_price_realized"].sum()
+    naive_income_model = -energy * df.loc[df["naive_strategy_action"] & ~df["pred"], "settlement_price_realized"].sum()
 
     # Use the target
-    best_income = energy * df.loc[df["naive_strategy_action"] & df["true"], "settlement_price_realized"].sum()
+    best_income = -energy * df.loc[df["naive_strategy_action"] & ~df["true"], "settlement_price_realized"].sum()
 
     # Calculate add value
     added_value = naive_income_model - naive_income
     added_value_best = best_income - naive_income
-    revenue = [naive_income, naive_income_model, added_value, best_income, added_value_best]
 
-    return penalty, revenue
+    # Create table
+    revenue = [[naive_income, naive_income_model, added_value, added_value / naive_income],
+               [naive_income, best_income, added_value_best, added_value_best / naive_income]]
+
+    revenue_df = pd.DataFrame(revenue)
+    revenue_df.columns = ["naive", "model", "added", "perc"]
+
+    return penalty_df, revenue_df
 
 
 def print_penalty_score(results, titles=None):
@@ -150,7 +166,7 @@ def print_penalty_score(results, titles=None):
     )
 
 
-def show_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=False, version="target"):
+def show_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=True, version="target"):
     """Show the penalty metric."""
     results = compute_penalty_score(df, pred, example_revenue, version)
     print_penalty_score(results)
@@ -188,10 +204,18 @@ def compute_time_diff_score(df: pd.DataFrame, pred: pd.Series, version="target")
     true_time_avg = true_time.mean()
     true_count = flat_df["true"].sum()
 
+    # Create table
     time_df = pd.concat([true_pos_time_neg, true_pos_time_pos], axis=1)
     time_df.columns = ["neg", "pos"]
 
-    return time_df, true_pos_time_avg, true_time_avg, true_pos_count, true_count
+    # Create table
+    time_true = [[true_pos_time_avg, true_time_avg],
+                 [true_pos_count, true_count]]
+
+    time_true_df = pd.DataFrame(time_true)
+    time_true_df.columns = ["pred", "max"]
+
+    return time_df, time_true_df
 
 
 def print_time_diff_score(results, titles=None):
@@ -209,7 +233,7 @@ def print_time_diff_score(results, titles=None):
 
     # Create subplots for time difference averages
     make_subplots(
-        lambda result, title, ax: plot_time_diff_avg(result[1:], title, ax),
+        lambda result, title, ax: plot_time_diff_avg(result[1], title, ax),
         results,
         titles,
         suptitle="Comparison of Time Difference scores - Average",
@@ -227,7 +251,7 @@ def compute_metrics(df: pd.DataFrame, pred: pd.Series, version="target"):
     """Show every metric."""
     results = []
     results.append(compute_basic_metrics(df, pred, False, version))
-    results.append(compute_basic_metrics(df, pred, version))
+    results.append(compute_basic_metrics(df, pred, True, version))
     results.append(compute_penalty_score(df, pred, True, version))
     results.append(compute_time_diff_score(df, pred, version))
     return results
@@ -261,13 +285,13 @@ def show_metrics_adjusted(df: pd.DataFrame, pred: pd.Series, version="target"):
     # Adjusted with realtime
     pred_real = adjust_pred_realtime(df[f"{version}_two_sided_ptu_realtime"], pred)
 
-    # Adjusted with consistency
-    pred_con = adjust_pred_consistency(pred, df["ptu_id"])
-
     # Adjusted with consistency and realtime
-    pred_con_real = adjust_pred_realtime(df[f"{version}_two_sided_ptu_realtime"], pred_con)
+    pred_con = adjust_pred_consistency(pred_real, df["ptu_id"])
 
-    preds = [pred, pred_real, pred_con, pred_con_real]
+    # Naive using only realtime
+    naive = df[f"{version}_two_sided_ptu_realtime"]
+
+    preds = [pred, pred_real, pred_con, naive]
     preds = [adjust_pred_conform(p, df["ptu_id"]) for p in preds]
-    titles = ["Base", "Adjusted Real-time", "Adjusted Consistency", "Adjusted Consistency + Real-time"]
+    titles = ["Base", "Adjusted Real-time", "Adjusted Consistency + Real-time", "Naive"]
     show_metrics_multi(df, preds, titles, version)

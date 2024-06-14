@@ -47,7 +47,11 @@ def add_fix_target(df: pd.DataFrame, base="target", output="fix"):
         group.iloc[:2] = False
         return group
 
-    df[f"{output}_two_sided_ptu"] = df.groupby("ptu_id")[f"{base}_two_sided_ptu_realtime"].transform(set_first_two_false)
+    df[f"{output}_two_sided_ptu"] = df["time_since_last_two_sided"] == 0
+    df[f"{output}_two_sided_ptu"] = df.groupby("ptu_id")[f"{output}_two_sided_ptu"].transform(set_first_two_false)
+
+    # df[f"{output}_two_sided_ptu"] = df.groupby("ptu_id")[f"{base}_two_sided_ptu_realtime"].transform(set_first_two_false)
+    # logger.info(f"Added {output} target. ({output}_two_sided_ptu_flip)")
     return df
 
 

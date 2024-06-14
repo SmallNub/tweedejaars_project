@@ -1,5 +1,6 @@
 # Misc
 personal/
+.vscode/
 
 # Data
 data/external/*.pkl

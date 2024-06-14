@@ -87,28 +87,25 @@ def plot_penalty_score(score, title, ax):
     """Plot penalty score."""
     index_names = ["False neg", "False pos", "Total"]
     column_names = ["Percentage", "Prediction", "Maximum"]
-    data = [[score[0] / score[1], score[0], score[1]],
-            [score[2] / score[3], score[2], score[3]],
-            [(score[0] + score[2]) / (score[1] + score[3]), score[0] + score[2], score[1] + score[3]]]
+    data = score.values
     df = pd.DataFrame(data, columns=column_names, index=index_names)
     plot_df(df, title, ax, "0 is no penalty, max is max penalty")
 
 
 def plot_income_score(score, title, ax):
     """Plot income score."""
-    index_names = ["Prediction", "Maximum"]
-    column_names = ["Naive income", "Model income", "Added value"]
-    data = [[score[0], score[1], score[2]],
-            [score[0], score[3], score[4]]]
+    index_names = ["Pred", "Max"]
+    column_names = ["Naive", "Model", "Added", "Added %"]
+    data = score.values
     df = pd.DataFrame(data, columns=column_names, index=index_names)
-    plot_df(df, title, ax, f"Added value percentage to max: {score[2] / score[4]:.3f}")
+    plot_df(df, title, ax, f"Added % of max: {score.iloc[0, 3] / score.iloc[1, 3]:.3f}")
 
 
 def plot_time_diff_df(score, title, ax):
     """Plot time difference score."""
     index_names = score.index
     column_names = score.columns
-    data = score
+    data = score.values
     df = pd.DataFrame(data, columns=column_names, index=index_names)
     plot_df(df, title, ax)
 
@@ -117,7 +114,6 @@ def plot_time_diff_avg(score, title, ax):
     """Plot time difference score."""
     index_names = ["Time delay", "True pos count"]
     column_names = ["Pred", "Max"]
-    data = [[score[0], score[1]],
-            [score[2], score[3]]]
+    data = score.values
     df = pd.DataFrame(data, columns=column_names, index=index_names)
     plot_df(df, title, ax, "More neg is better")
