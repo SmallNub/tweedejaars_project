@@ -35,12 +35,12 @@ def add_realtime_target(df: pd.DataFrame, version="target"):
 
 def add_flip_target(df: pd.DataFrame, version="target"):
     """Adds a column containing when the ptu flipped to two-sided."""
-    df[f"{version}_two_sided_ptu_flip"] = detect_flip(df[f"{version}_two_sided_ptu_realtime"], df[f"{version}_two_sided_ptu_realtime"])
+    df[f"{version}_two_sided_ptu_flip"] = detect_flip(df[f"{version}_two_sided_ptu_realtime"])
     logger.info(f"Added flip target. ({version}_two_sided_ptu_flip)")
     return df
 
 
-def add_fix_target(df: pd.DataFrame, base="target", output="fix"):
+def add_fix_target(df: pd.DataFrame, output="fix"):
     """Adds a column containing the fixed version of the target."""
     def set_first_two_false(group):
         group.iloc[:] = group.any()
@@ -49,9 +49,7 @@ def add_fix_target(df: pd.DataFrame, base="target", output="fix"):
 
     df[f"{output}_two_sided_ptu"] = df["time_since_last_two_sided"] == 0
     df[f"{output}_two_sided_ptu"] = df.groupby("ptu_id")[f"{output}_two_sided_ptu"].transform(set_first_two_false)
-
-    # df[f"{output}_two_sided_ptu"] = df.groupby("ptu_id")[f"{base}_two_sided_ptu_realtime"].transform(set_first_two_false)
-    # logger.info(f"Added {output} target. ({output}_two_sided_ptu_flip)")
+    logger.info(f"Added fix target. ({output}_two_sided_ptu)")
     return df
 
 

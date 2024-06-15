@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix
 
 from tweedejaars_project.utility import flatten_ptu, get_submatrix
-from tweedejaars_project.evaluation import detect_flip, adjust_pred_realtime, adjust_pred_consistency, adjust_pred_conform
+from tweedejaars_project.evaluation import adjust_pred_realtime, adjust_pred_consistency, adjust_pred_conform
 from tweedejaars_project.visualization import default_titles, make_subplots, \
     plot_classification_report, plot_confusion_matrix, plot_penalty_score, plot_time_diff_df, plot_time_diff_avg, plot_income_score
 
@@ -178,7 +178,7 @@ def compute_time_diff_score(df: pd.DataFrame, pred: pd.Series, version="target")
     df["start_idx"] = True
     df["true"] = df[f"{version}_two_sided_ptu"]
     df["pred"] = pred
-    df["flip"] = detect_flip(df[f"{version}_two_sided_ptu_realtime"], df["pred"])
+    df["flip"] = df["pred"]
     agg_dict = {
         "start_idx": "idxmax",                          # Get the start index of the PTU
         "flip": "idxmax",                               # The time it flips
@@ -292,6 +292,6 @@ def show_metrics_adjusted(df: pd.DataFrame, pred: pd.Series, version="target"):
     naive = df[f"{version}_two_sided_ptu_realtime"]
 
     preds = [pred, pred_real, pred_con, naive]
-    preds = [adjust_pred_conform(p, df["ptu_id"]) for p in preds]
+    preds = [adjust_pred_conform(p) for p in preds]
     titles = ["Base", "Adjusted Real-time", "Adjusted Consistency + Real-time", "Naive"]
     show_metrics_multi(df, preds, titles, version)

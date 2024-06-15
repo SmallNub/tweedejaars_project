@@ -1,9 +1,20 @@
 import pandas as pd
+from numba import jit
 
 
-def detect_flip(realtime: pd.Series, target: pd.Series):
+def detect_flip(target: pd.Series):
     """Detect when the PTU flips to two-sided. Works best with adjusted target."""
-    return target.diff() & realtime
+    @jit
+    def get_flip(target):
+        length = len(target)
+        for i in range(0, length, 15):
+            end = min(i + 15, length)
+            for idx in range(i, end):
+                if target[idx]:
+                    target[idx + 1:end] = False
+        return target
+
+    return pd.Series(get_flip(target.to_numpy()), name="flip")
 
 
 def adjust_pred_consistency(pred: pd.Series, ids: pd.Series):
@@ -13,7 +24,7 @@ def adjust_pred_consistency(pred: pd.Series, ids: pd.Series):
     """
     df = pd.concat([pred, ids], axis=1)
     df.columns = ["pred", "id"]
-    df["pred"] = df.groupby("id")["pred"].transform("cummax")
+    df["pred"] = df.groupby("id")["pred"].transform("cummax", engine="numba", engine_kwargs={"parallel": True})
     return df["pred"]
 
 
@@ -25,13 +36,12 @@ def adjust_pred_realtime(realtime: pd.Series, pred: pd.Series):
     return realtime | pred
 
 
-def adjust_pred_conform(pred: pd.Series, ids: pd.Series):
+def adjust_pred_conform(pred: pd.Series):
     """Set the first values in each PTU to be false to correspond to the original target."""
-    def set_first_two_false(group):
-        group.iloc[:2] = False
-        return group
-
-    df = pd.concat([pred, ids], axis=1)
-    df.columns = ["pred", "id"]
-    df["pred"] = df.groupby("id")["pred"].transform(set_first_two_false)
-    return df["pred"]
+    @jit
+    def set_first_two_false(pred):
+        for i in range(0, len(pred), 15):
+            pred[i] = False
+            pred[i + 1] = False
+        return pred
+    return pd.Series(set_first_two_false(pred.to_numpy()), name="pred")
