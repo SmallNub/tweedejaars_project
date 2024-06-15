@@ -8,7 +8,7 @@ from tweedejaars_project.visualization import default_titles, make_subplots, \
 
 
 def compute_basic_metrics(df: pd.DataFrame, pred: pd.Series, flatten=True, version="target"):
-    """Compute basic metric performance, classification report and confusion matrix."""
+    """Computes the basic metric performance: classification report and confusion matrix."""
     true = df[f"{version}_two_sided_ptu"]
 
     if flatten:
@@ -60,8 +60,7 @@ def show_basic_metrics(df: pd.DataFrame, pred: pd.Series, flatten=True, version=
 
 
 def compute_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=True, version="target"):
-    """Calculates the penalty in revenue lost and gained."""
-    energy = 100 / 60  # Example renewable energy
+    """Computes the penalty for false negatives and false positives."""
     df = df.copy()
     df["min_price"] = df["min_price_published"]
     df["max_price"] = df["max_price_published"]
@@ -98,6 +97,7 @@ def compute_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=Tru
 
     # Use the example revenue
     if example_revenue:
+        energy = 100 / 60  # Example renewable energy
         false_neg_penalty *= flat_df["max_price"] * -energy
         false_pos_penalty *= flat_df["min_price"] * energy
         false_neg_penalty_total *= flat_df["max_price"] * -energy
@@ -118,16 +118,41 @@ def compute_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=Tru
 
     penalty_df = pd.DataFrame(penalty)
     penalty_df.columns = ["perc", "pred", "max"]
+    return penalty_df
 
-    # Income metrics from the email
+
+def print_penalty_score(results, titles=None):
+    """Print the results of the penalty metric."""
+    titles = default_titles(results, titles)
+
+    # Create subplots for penalty scores
+    make_subplots(
+        plot_penalty_score,
+        results,
+        titles,
+        suptitle="Comparison of Penalty Scores",
+        figsize=(18, 3)
+    )
+
+
+def show_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=True, version="target"):
+    """Show the penalty metric."""
+    results = compute_penalty_score(df, pred, example_revenue, version)
+    print_penalty_score(results)
+
+
+def compute_income_score(df: pd.DataFrame, pred: pd.Series, version="target"):
+    """Computes the earned income."""
+    energy = 100 / 60  # Example renewable energy
+
     # Ignore two-sided PTU
     naive_income = -energy * df.loc[df["naive_strategy_action"], "settlement_price_realized"].sum()
 
     # Use predictions
-    naive_income_model = -energy * df.loc[df["naive_strategy_action"] & ~df["pred"], "settlement_price_realized"].sum()
+    naive_income_model = -energy * df.loc[df["naive_strategy_action"] & ~pred, "settlement_price_realized"].sum()
 
     # Use the target
-    best_income = -energy * df.loc[df["naive_strategy_action"] & ~df["true"], "settlement_price_realized"].sum()
+    best_income = -energy * df.loc[df["naive_strategy_action"] & ~df[f"{version}_two_sided_ptu"], "settlement_price_realized"].sum()
 
     # Calculate add value
     added_value = naive_income_model - naive_income
@@ -140,25 +165,16 @@ def compute_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=Tru
     revenue_df = pd.DataFrame(revenue)
     revenue_df.columns = ["naive", "model", "added", "perc"]
 
-    return penalty_df, revenue_df
+    return revenue_df
 
 
-def print_penalty_score(results, titles=None):
-    """Print the results of the penalty metric."""
+def print_income_score(results, titles=None):
+    """Print the results of the income metric."""
     titles = default_titles(results, titles)
-
-    # Create subplots for penalty scores
-    make_subplots(
-        lambda result, title, ax: plot_penalty_score(result[0], title, ax),
-        results,
-        titles,
-        suptitle="Comparison of Penalty Scores",
-        figsize=(18, 3)
-    )
 
     # Create subplots for income scores
     make_subplots(
-        lambda result, title, ax: plot_income_score(result[1], title, ax),
+        lambda result, title, ax: plot_income_score(result, title, ax),
         results,
         titles,
         suptitle="Comparison of Income Scores",
@@ -166,14 +182,14 @@ def print_penalty_score(results, titles=None):
     )
 
 
-def show_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=True, version="target"):
-    """Show the penalty metric."""
-    results = compute_penalty_score(df, pred, example_revenue, version)
-    print_penalty_score(results)
+def show_income_score(df: pd.DataFrame, pred: pd.Series, version="target"):
+    """Show the income metric."""
+    results = compute_income_score(df, pred, version)
+    print_income_score(results)
 
 
 def compute_time_diff_score(df: pd.DataFrame, pred: pd.Series, version="target"):
-    """Calculate the time delay between predictions and realtime."""
+    """Computes the time delay between predictions and realtime."""
     df = df.copy()
     df["start_idx"] = True
     df["true"] = df[f"{version}_two_sided_ptu"]
@@ -247,22 +263,24 @@ def show_time_diff_score(df: pd.DataFrame, pred: pd.Series, version="target"):
     print_time_diff_score(results)
 
 
-def compute_metrics(df: pd.DataFrame, pred: pd.Series, version="target"):
+def compute_metrics(df: pd.DataFrame, pred: pd.Series, version="target", ):
     """Show every metric."""
     results = []
     results.append(compute_basic_metrics(df, pred, False, version))
     results.append(compute_basic_metrics(df, pred, True, version))
     results.append(compute_penalty_score(df, pred, True, version))
+    results.append(compute_income_score(df, pred, version))
     results.append(compute_time_diff_score(df, pred, version))
     return results
 
 
-def print_metrics(results):
+def print_metrics(results, titles=None):
     """Print every metric."""
-    print_basic_metrics(results[0])
-    print_basic_metrics(results[1])
-    print_penalty_score(results[2])
-    print_time_diff_score(results[3])
+    print_basic_metrics(results[0], titles)
+    print_basic_metrics(results[1], titles)
+    print_penalty_score(results[2], titles)
+    print_income_score(results[3], titles)
+    print_time_diff_score(results[4], titles)
 
 
 def show_metrics(df: pd.DataFrame, pred: pd.Series, version="target"):
@@ -277,7 +295,8 @@ def show_metrics_multi(df: pd.DataFrame, preds: list[pd.Series], titles=None, ve
     print_basic_metrics(get_submatrix(results, col_start=0, col_end=1, auto_flat=True), titles)
     print_basic_metrics(get_submatrix(results, col_start=1, col_end=2, auto_flat=True), titles)
     print_penalty_score(get_submatrix(results, col_start=2, col_end=3, auto_flat=True), titles)
-    print_time_diff_score(get_submatrix(results, col_start=3, col_end=4, auto_flat=True), titles)
+    print_income_score(get_submatrix(results, col_start=3, col_end=4, auto_flat=True), titles)
+    print_time_diff_score(get_submatrix(results, col_start=4, col_end=5, auto_flat=True), titles)
 
 
 def show_metrics_adjusted(df: pd.DataFrame, pred: pd.Series, version="target"):

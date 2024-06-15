@@ -13,7 +13,7 @@ def default_titles(results, titles):
 def make_subplots(subplot_func, results, titles, suptitle, figsize):
     """Make subplots using results."""
     # Check if there are multiple results
-    if isinstance(results[0], (tuple, list)):
+    if isinstance(results[0], (tuple, list, pd.DataFrame)) and isinstance(results, (tuple, list)):
         single = False
     else:
         single = True
