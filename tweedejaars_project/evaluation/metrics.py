@@ -117,7 +117,7 @@ def compute_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=Tru
                [false_sum_penalty / false_sum_penalty_total, false_sum_penalty, false_sum_penalty_total]]
 
     penalty_df = pd.DataFrame(penalty)
-    penalty_df.columns = ["pred", "max", "perc"]
+    penalty_df.columns = ["perc", "pred", "max"]
 
     # Income metrics from the email
     # Ignore two-sided PTU
