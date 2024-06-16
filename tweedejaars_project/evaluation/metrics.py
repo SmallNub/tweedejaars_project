@@ -1,7 +1,9 @@
 import pandas as pd
+import numpy as np
+from numba import jit
 from sklearn.metrics import classification_report, confusion_matrix
 
-from tweedejaars_project.utility import flatten_ptu, get_submatrix
+from tweedejaars_project.utility import flatten_ptu, transpose_matrix
 from tweedejaars_project.evaluation import adjust_pred_realtime, adjust_pred_consistency, adjust_pred_conform
 from tweedejaars_project.visualization import default_titles, make_subplots, \
     plot_classification_report, plot_confusion_matrix, plot_penalty_score, plot_time_diff_df, plot_time_diff_avg, plot_income_score
@@ -141,6 +143,21 @@ def show_penalty_score(df: pd.DataFrame, pred: pd.Series, example_revenue=True, 
     print_penalty_score(results)
 
 
+@jit
+def compute_income_score_added(action: np.ndarray, price: np.ndarray, pred: np.ndarray, naive: float):
+    """Computes only the added value percentage of the income metric."""
+    energy = -100 / 60  # Example renewable energy
+    naive_income_model = (energy * sum(price[action & ~pred]) - naive) / naive
+    return naive_income_model
+
+
+def compute_income_score_naive(action: pd.Series, price: pd.Series):
+    """Computes only the naive income part of the income metric."""
+    energy = 100 / 60  # Example renewable energy
+    naive_income = -energy * price[action].sum()
+    return naive_income
+
+
 def compute_income_score(df: pd.DataFrame, pred: pd.Series, version="target"):
     """Computes the earned income."""
     energy = 100 / 60  # Example renewable energy
@@ -217,6 +234,7 @@ def compute_time_diff_score(df: pd.DataFrame, pred: pd.Series, version="target")
 
     # Best case scenario
     true_time = flat_df.loc[flat_df["true"], "start_idx"] - flat_df.loc[flat_df["true"], f"{version}_two_sided_ptu_realtime"]
+    true_time += 2  # Delay of 2 mins
     true_time_avg = true_time.mean()
     true_count = flat_df["true"].sum()
 
@@ -263,7 +281,7 @@ def show_time_diff_score(df: pd.DataFrame, pred: pd.Series, version="target"):
     print_time_diff_score(results)
 
 
-def compute_metrics(df: pd.DataFrame, pred: pd.Series, version="target", ):
+def compute_metrics(df: pd.DataFrame, pred: pd.Series, version="target"):
     """Show every metric."""
     results = []
     results.append(compute_basic_metrics(df, pred, False, version))
@@ -292,11 +310,7 @@ def show_metrics(df: pd.DataFrame, pred: pd.Series, version="target"):
 def show_metrics_multi(df: pd.DataFrame, preds: list[pd.Series], titles=None, version="target"):
     """Show every metric for every prediction."""
     results = [compute_metrics(df, pred, version) for pred in preds]
-    print_basic_metrics(get_submatrix(results, col_start=0, col_end=1, auto_flat=True), titles)
-    print_basic_metrics(get_submatrix(results, col_start=1, col_end=2, auto_flat=True), titles)
-    print_penalty_score(get_submatrix(results, col_start=2, col_end=3, auto_flat=True), titles)
-    print_income_score(get_submatrix(results, col_start=3, col_end=4, auto_flat=True), titles)
-    print_time_diff_score(get_submatrix(results, col_start=4, col_end=5, auto_flat=True), titles)
+    print_metrics(transpose_matrix(results), titles)
 
 
 def show_metrics_adjusted(df: pd.DataFrame, pred: pd.Series, version="target"):
@@ -305,12 +319,10 @@ def show_metrics_adjusted(df: pd.DataFrame, pred: pd.Series, version="target"):
     pred_real = adjust_pred_realtime(df[f"{version}_two_sided_ptu_realtime"], pred)
 
     # Adjusted with consistency and realtime
-    pred_con = adjust_pred_consistency(pred_real, df["ptu_id"])
+    pred_con = adjust_pred_consistency(pred_real)
 
-    # Naive using only realtime
-    naive = df[f"{version}_two_sided_ptu_realtime"]
-
-    preds = [pred, pred_real, pred_con, naive]
+    preds = [pred, pred_real, pred_con]
     preds = [adjust_pred_conform(p) for p in preds]
-    titles = ["Base", "Adjusted Real-time", "Adjusted Consistency + Real-time", "Naive"]
+    preds.insert(0, pred)
+    titles = ["Base", "Conform", "Real-time + Conform", "Consistency + Real-time + Conform"]
     show_metrics_multi(df, preds, titles, version)
