@@ -253,6 +253,7 @@ dependencies:
   - parso=0.8.4=pyhd8ed1ab_0
   - partd=1.4.1=py312h06a4308_0
   - pathspec=0.12.1=pyhd8ed1ab_0
+  - patsy=0.5.6=py312h06a4308_0
   - pcre2=10.43=hcad00b1_0
   - pexpect=4.9.0=pyhd8ed1ab_0
   - pickleshare=0.7.5=py_1003
@@ -317,6 +318,7 @@ dependencies:
   - sortedcontainers=2.4.0=pyhd3eb1b0_0
   - soupsieve=2.5=pyhd8ed1ab_1
   - stack_data=0.6.2=pyhd8ed1ab_0
+  - statsmodels=0.14.2=py312ha883a20_0
   - sympy=1.12=py312h06a4308_0
   - tbb=2021.8.0=hdb19cb5_0
   - tblib=1.7.0=pyhd3eb1b0_0
