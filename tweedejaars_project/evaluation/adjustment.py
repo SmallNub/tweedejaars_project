@@ -3,14 +3,17 @@ from numba import jit
 
 
 @jit
-def change_after_flip(target, value):
+def change_after_flip(target, value, flips=1):
     """Change the values after flipping."""
     length = len(target)
     for i in range(0, length, 15):
+        flip_count = 0
         end = min(i + 15, length)
         for idx in range(i, end):
             if target[idx]:
-                target[idx + 1:end] = value
+                flip_count += 1
+                if flip_count >= flips:
+                    target[idx + 1:end] = value
     return target
 
 
@@ -19,12 +22,12 @@ def detect_flip(target: pd.Series):
     return pd.Series(change_after_flip(target.to_numpy(copy=True), False), name="flip")
 
 
-def adjust_pred_consistency(pred: pd.Series):
+def adjust_pred_consistency(pred: pd.Series, flips=3):
     """
     Adjust the predictions to be consistent.\\
     If it predicts True earlier, it will keep being True for the rest of the PTU.
     """
-    return pd.Series(change_after_flip(pred.to_numpy(copy=True), True), name="pred")
+    return pd.Series(change_after_flip(pred.to_numpy(copy=True), True, flips), name="pred")
 
 
 def adjust_pred_realtime(realtime: pd.Series, pred: pd.Series):
