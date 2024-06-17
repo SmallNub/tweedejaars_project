@@ -55,6 +55,15 @@ def get_submatrix(matrix, row_start=None, row_end=None, col_start=None, col_end=
     return [row[col_start:col_end] for row in matrix[row_start:row_end]]
 
 
+def transpose_matrix(matrix):
+    """Get the transpose of a 2D nested list."""
+    out = [[] for _ in range(len(matrix[0]))]
+    for i in range(len(matrix)):
+        for j in range(len(matrix[i])):
+            out[j].append(matrix[i][j])
+    return out
+
+
 def recast_pred(pred: np.ndarray):
     """Recast the predictions into a series object."""
     return pd.Series(pred, dtype=bool, name="pred")

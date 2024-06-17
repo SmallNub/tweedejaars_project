@@ -89,7 +89,7 @@ def plot_penalty_score(score, title, ax):
     column_names = ["Percentage", "Prediction", "Maximum"]
     data = score.values
     df = pd.DataFrame(data, columns=column_names, index=index_names)
-    plot_df(df, title, ax, "0 is no penalty, max is max penalty")
+    plot_df(df, title, ax, "0 is no penalty, 1 is max penalty")
 
 
 def plot_income_score(score, title, ax):
