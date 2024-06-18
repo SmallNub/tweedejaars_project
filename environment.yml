@@ -47,7 +47,7 @@ dependencies:
   - cached-property=1.5.2=hd8ed1ab_1
   - cached_property=1.5.2=pyha770c72_1
   - cairo=1.18.0=h3faef2a_0
-  - certifi=2024.6.2=py312h06a4308_0
+  - certifi=2024.6.2=pyhd8ed1ab_0
   - cffi=1.16.0=py312hf06ca03_0
   - charset-normalizer=3.3.2=pyhd8ed1ab_0
   - click=8.1.7=unix_pyh707e725_0
@@ -202,7 +202,7 @@ dependencies:
   - libxkbcommon=1.7.0=h662e7e4_0
   - libxml2=2.12.7=hc051c1a_0
   - libzlib=1.2.13=h4ab18f5_6
-  - lightgbm=4.3.0=py312h6a678d5_0
+  - lightgbm=4.4.0=py312h7070661_0
   - llvmlite=0.42.0=py312h6a678d5_0
   - locket=1.0.0=py312h06a4308_0
   - loguru=0.7.2=py312h7900ff3_1
