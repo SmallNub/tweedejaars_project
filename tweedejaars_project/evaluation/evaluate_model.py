@@ -25,14 +25,14 @@ def evaluate_income(
         pred = adjust_pred_realtime(realtime, pred)
 
         # Make consistent first (then conform (not relevant for income))
-        pred_con = adjust_pred_consistency(pred)
+        # pred_con = adjust_pred_consistency(pred)
 
         # Make conform first then consistent
-        pred = adjust_pred_conform(pred)
-        pred_con2 = adjust_pred_consistency(pred)
+        # pred = adjust_pred_conform(pred)
+        # pred_con2 = adjust_pred_consistency(pred)
 
         # Compute scores
-        preds = [pred, pred_con, pred_con2]
+        preds = [pred]
         scores = [compute_income_score_added(action, price, p.to_numpy(copy=True), naive) for p in preds]
         return model, scores
 
@@ -44,7 +44,7 @@ def evaluate_income(
 
     results = Parallel(n_jobs=-1)(delayed(step)(train_in, train_out, test_in, realtime, action, price, naive) for _ in range(repeat))
 
-    n_out = 3
+    n_out = 1
     out = [[None, -np.inf, []] for _ in range(n_out)]
     for model, scores in results:
         for i, score in enumerate(scores):

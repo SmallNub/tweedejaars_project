@@ -16,12 +16,15 @@ def add_ids(df: pd.DataFrame):
     """Adds a column containing an unique id for each ptu."""
     df["ptu_id"] = (df["datetime"] - df["datetime"].min()) // pd.Timedelta(minutes=15)
     logger.info("Added id for each ptu. (ptu_id)")
+
+    df["ptu_id_delay"] = df["ptu_id"].shift(2, fill_value=-1)
+    logger.info("Added id for each ptu with delay. (ptu_id_delay)")
     return df
 
 
 def add_alt_target(df: pd.DataFrame, version="target"):
     """Adds a column containing an alternative target, the first two minutes are also counted."""
-    df[f"{version}_two_sided_ptu_alt"] = df.groupby("ptu_id")[f"{version}_two_sided_ptu"].transform("any")
+    df[f"{version}_two_sided_ptu_alt"] = df.groupby("ptu_id_delay")[f"{version}_two_sided_ptu"].transform("any")
     logger.info(f"Added alternative target. ({version}_two_sided_ptu_alt)")
     return df
 
