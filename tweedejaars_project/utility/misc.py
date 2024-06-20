@@ -92,3 +92,11 @@ def flatten_ptu(df: pd.DataFrame):
     # Flatten
     flat_df = df.groupby("ptu_id").agg(agg_dict).reset_index()
     return flat_df
+
+
+def lag(df: pd.DataFrame, feature: str, amount=1):
+    """Lag a feature by an amount."""
+    lagged_feature = f"{feature}_{amount}"
+    df[lagged_feature] = df[feature].shift(amount)
+    # df[lagged_feature] = df[lagged_feature].bfill()
+    return df

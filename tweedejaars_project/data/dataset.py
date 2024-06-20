@@ -20,6 +20,23 @@ def fix_target(df: pd.DataFrame) -> pd.DataFrame:
     temp_df = add_realtime_target(temp_df)
     temp_df = add_fix_target(temp_df)
     df["target_two_sided_ptu"] = temp_df["fix_two_sided_ptu_realtime"]
+    logger.info("Fixed the target.")
+    return df
+
+
+def fix_nan(df: pd.DataFrame):
+    """Forward fills some features to fix NaNs."""
+    features = [
+        "upward_dispatch_published",
+        "downward_dispatch_published",
+        "igcc_contribution_up_published",
+        "igcc_contribution_down_published",
+        "forecast_wind",
+        "forecast_solar",
+        "forecast_demand",
+    ]
+    df[features] = df[features].ffill()
+    logger.info("Fixed all the NaNs in some features.")
     return df
 
 
@@ -33,7 +50,7 @@ def main(
 
     # List of (feature_function, args, kwargs) tuples
     tasks = [
-
+        (fix_nan, (), {}),
     ]
 
     logger.info("Processing dataset...")
