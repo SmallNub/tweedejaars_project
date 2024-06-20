@@ -22,10 +22,53 @@ def add_ids(df: pd.DataFrame):
     return df
 
 
+def add_alt_target(df: pd.DataFrame, version="target"):
+    """Adds a column containing an alternative target, the first two minutes are also counted."""
+    df[f"{version}_two_sided_ptu_alt"] = df.groupby("ptu_id_delay")[f"{version}_two_sided_ptu"].transform("any")
+    logger.info(f"Added alternative target. ({version}_two_sided_ptu_alt)")
+    return df
+
+
+def add_realtime_target(df: pd.DataFrame, version="target"):
+    """Adds a column containing a real-time version of the target."""
+    df[f"{version}_two_sided_ptu_realtime"] = (df["time_since_last_two_sided"] == 0) & df[f"{version}_two_sided_ptu_alt"]
+    logger.info(f"Added realtime target. ({version}_two_sided_ptu_realtime)")
+    return df
+
+
+def add_flip_target(df: pd.DataFrame, version="target"):
+    """Adds a column containing when the ptu flipped to two-sided."""
+    df[f"{version}_two_sided_ptu_flip"] = detect_flip(df[f"{version}_two_sided_ptu_realtime"])
+    logger.info(f"Added flip target. ({version}_two_sided_ptu_flip)")
+    return df
+
+
+def add_fix_target(df: pd.DataFrame, output="fix"):
+    """Adds a column containing the fixed version of the target."""
+    def set_first_two_false(group):
+        group.iloc[:] = group.any()
+        group.iloc[:2] = False
+        return group
+
+    df[f"{output}_two_sided_ptu"] = df["time_since_last_two_sided"] == 0
+    df[f"{output}_two_sided_ptu"] = df.groupby("ptu_id")[f"{output}_two_sided_ptu"].transform(set_first_two_false)
+    logger.info(f"Added fix target. ({output}_two_sided_ptu)")
+    return df
+
+
 def add_residual_load(df: pd.DataFrame):
     """Adds a column containing the residual load."""
     df["residual_load"] = df["forecast_demand"] - df["forecast_solar"] - df["forecast_wind"]
     logger.info("Added residual load. (residual_load)")
+    return df
+
+
+def add_forecast_deltas(df: pd.DataFrame):
+    """Adds multiple columns containing the deltas of the forcasts."""
+    df["forecast_wind_delta"] = df["forecast_wind"].diff(15)
+    df["forecast_solar_delta"] = df["forecast_wind"].diff(15)
+    df["forecast_demand_delta"] = df["forecast_wind"].diff(15)
+    logger.info("Added deltas of forcasts. (<many>)")
     return df
 
 
@@ -68,40 +111,6 @@ def add_binary_features(df: pd.DataFrame):
     return df
 
 
-def add_alt_target(df: pd.DataFrame, version="target"):
-    """Adds a column containing an alternative target, the first two minutes are also counted."""
-    df[f"{version}_two_sided_ptu_alt"] = df.groupby("ptu_id_delay")[f"{version}_two_sided_ptu"].transform("any")
-    logger.info(f"Added alternative target. ({version}_two_sided_ptu_alt)")
-    return df
-
-
-def add_realtime_target(df: pd.DataFrame, version="target"):
-    """Adds a column containing a real-time version of the target."""
-    df[f"{version}_two_sided_ptu_realtime"] = (df["time_since_last_two_sided"] == 0) & df[f"{version}_two_sided_ptu_alt"]
-    logger.info(f"Added realtime target. ({version}_two_sided_ptu_realtime)")
-    return df
-
-
-def add_flip_target(df: pd.DataFrame, version="target"):
-    """Adds a column containing when the ptu flipped to two-sided."""
-    df[f"{version}_two_sided_ptu_flip"] = detect_flip(df[f"{version}_two_sided_ptu_realtime"])
-    logger.info(f"Added flip target. ({version}_two_sided_ptu_flip)")
-    return df
-
-
-def add_fix_target(df: pd.DataFrame, output="fix"):
-    """Adds a column containing the fixed version of the target."""
-    def set_first_two_false(group):
-        group.iloc[:] = group.any()
-        group.iloc[:2] = False
-        return group
-
-    df[f"{output}_two_sided_ptu"] = df["time_since_last_two_sided"] == 0
-    df[f"{output}_two_sided_ptu"] = df.groupby("ptu_id")[f"{output}_two_sided_ptu"].transform(set_first_two_false)
-    logger.info(f"Added fix target. ({output}_two_sided_ptu)")
-    return df
-
-
 @app.command()
 def main(
     input_path: Path = INTERIM_DATA_DIR / MAIN_DATA_FILE_NAME,
@@ -113,11 +122,6 @@ def main(
     # List of (feature_function, args, kwargs) tuples
     tasks = [
         (add_ids, (), {}),
-        (add_residual_load, (), {}),
-        (add_price_volume, (), {}),
-        (add_diff, (), {}),
-        (add_time_features, (), {}),
-        (add_binary_features, (), {}),
         (add_alt_target, (), {}),
         (add_realtime_target, (), {}),
         (add_flip_target, (), {}),
@@ -125,6 +129,12 @@ def main(
         (add_alt_target, (), {"version": "fix"}),
         (add_realtime_target, (), {"version": "fix"}),
         (add_flip_target, (), {"version": "fix"}),
+        (add_residual_load, (), {}),
+        (add_forecast_deltas, (), {}),
+        (add_price_volume, (), {}),
+        (add_diff, (), {}),
+        (add_time_features, (), {}),
+        (add_binary_features, (), {}),
     ]
 
     logger.info("Generating features from dataset...")
