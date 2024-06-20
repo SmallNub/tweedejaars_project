@@ -98,5 +98,4 @@ def lag(df: pd.DataFrame, feature: str, amount=1):
     """Lag a feature by an amount."""
     lagged_feature = f"{feature}_{amount}"
     df[lagged_feature] = df[feature].shift(amount)
-    # df[lagged_feature] = df[lagged_feature].bfill()
     return df

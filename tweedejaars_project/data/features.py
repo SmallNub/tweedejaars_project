@@ -17,14 +17,14 @@ def add_ids(df: pd.DataFrame):
     df["ptu_id"] = (df["datetime"] - df["datetime"].min()) // pd.Timedelta(minutes=15)
     logger.info("Added id for each ptu. (ptu_id)")
 
-    df["ptu_id_delay"] = df["ptu_id"].shift(2, fill_value=-1)
-    logger.info("Added id for each ptu with delay. (ptu_id_delay)")
+    df["fix_ptu_id"] = df["ptu_id"].shift(2, fill_value=-1)
+    logger.info("Added id for each ptu with delay. (fix_ptu_id)")
     return df
 
 
 def add_alt_target(df: pd.DataFrame, version="target"):
     """Adds a column containing an alternative target, the first two minutes are also counted."""
-    df[f"{version}_two_sided_ptu_alt"] = df.groupby("ptu_id_delay")[f"{version}_two_sided_ptu"].transform("any")
+    df[f"{version}_two_sided_ptu_alt"] = df.groupby("fix_ptu_id")[f"{version}_two_sided_ptu"].transform("any")
     logger.info(f"Added alternative target. ({version}_two_sided_ptu_alt)")
     return df
 
@@ -56,6 +56,18 @@ def add_fix_target(df: pd.DataFrame, output="fix"):
     return df
 
 
+def add_binary_features(df: pd.DataFrame):
+    """Adds a column containing binary features."""
+    df["is_balanced"] = df["min_price_published"].isna() & df["max_price_published"].isna()
+    df["down_negative"] = df["min_price_published"] < 0
+    logger.info("Added binary features. (<many>)")
+    return df
+
+
+def add_fix_action(df: pd.DataFrame, version="target"):
+    df["down_negative"] & ~df[f"{version}_two_sided_ptu_alt"]
+
+
 def add_residual_load(df: pd.DataFrame):
     """Adds a column containing the residual load."""
     df["residual_load"] = df["forecast_demand"] - df["forecast_solar"] - df["forecast_wind"]
@@ -73,7 +85,7 @@ def add_forecast_deltas(df: pd.DataFrame):
 
 
 def add_price_volume(df: pd.DataFrame):
-    """Adds multiple columns containing price volume features."""
+    """Adds multiple columns containing price volume features. (NOTE decreases income)"""
     df["down_price_volume"] = df["downward_dispatch_published"] * df["min_price_published"]
     df["up_price_volume"] = df["upward_dispatch_published"] * df["max_price_published"]
     df["diff_price_volume"] = df["up_price_volume"] - df["down_price_volume"]
@@ -103,14 +115,6 @@ def add_time_features(df: pd.DataFrame):
     return df
 
 
-def add_binary_features(df: pd.DataFrame):
-    """Adds a column containing binary features."""
-    df["is_balanced"] = df["min_price_published"].isna() & df["max_price_published"].isna()
-    df["down_negative"] = df["min_price_published"] < 0
-    logger.info("Added binary features. (<many>)")
-    return df
-
-
 @app.command()
 def main(
     input_path: Path = INTERIM_DATA_DIR / MAIN_DATA_FILE_NAME,
@@ -129,12 +133,12 @@ def main(
         (add_alt_target, (), {"version": "fix"}),
         (add_realtime_target, (), {"version": "fix"}),
         (add_flip_target, (), {"version": "fix"}),
+        (add_binary_features, (), {}),
         (add_residual_load, (), {}),
         (add_forecast_deltas, (), {}),
         (add_price_volume, (), {}),
         (add_diff, (), {}),
         (add_time_features, (), {}),
-        (add_binary_features, (), {}),
     ]
 
     logger.info("Generating features from dataset...")
