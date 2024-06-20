@@ -1,6 +1,7 @@
 # Misc
 personal/
 .vscode/
+notebooks/cache/
 
 # Data
 data/external/*.pkl
