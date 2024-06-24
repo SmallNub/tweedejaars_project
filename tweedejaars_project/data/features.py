@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import typer
+import numpy as np
 from loguru import logger
 from tqdm import tqdm
 import pandas as pd
@@ -78,8 +79,8 @@ def add_residual_load(df: pd.DataFrame):
 def add_forecast_deltas(df: pd.DataFrame):
     """Adds multiple columns containing the deltas of the forcasts."""
     df["forecast_wind_delta"] = df["forecast_wind"].diff(15)
-    df["forecast_solar_delta"] = df["forecast_wind"].diff(15)
-    df["forecast_demand_delta"] = df["forecast_wind"].diff(15)
+    df["forecast_solar_delta"] = df["forecast_solar"].diff(15)
+    df["forecast_demand_delta"] = df["forecast_demand"].diff(15)
     logger.info("Added deltas of forcasts. (<many>)")
     return df
 
@@ -114,6 +115,27 @@ def add_time_features(df: pd.DataFrame):
     logger.info("Added several time features. (<many>)")
     return df
 
+def peak_features(df,feature,negative=False):
+    if negative:
+        df[f'{feature}_peak'] = (df[feature] >= df[feature].shift(1)) & (df[feature].shift(1) < df[feature].shift(2))
+    else:
+        df[f'{feature}_peak'] = (df[feature] <= df[feature].shift(1)) & (df[feature].shift(1) > df[feature].shift(2))
+
+    df[f'{feature}_peak_time'] = df[f'{feature}_peak'].cumsum()
+    df[f'{feature}_peak_time'] = df.groupby(f'{feature}_peak_time').cumcount() + 1
+
+    df['peak_values'] = np.where(df[f'{feature}_peak'], df[feature].shift(1), np.nan)
+    df['peak_values'] = df['peak_values'].ffill()
+    df[f'{feature}_peak_diff'] = df[feature] - df['peak_values'].ffill()
+
+def add_peak_features(df: pd.DataFrame):
+    peak_features(df,'downward_dispatch_published')
+    peak_features(df,'upward_dispatch_published')
+    peak_features(df,'igcc_contribution_down_published')
+    peak_features(df,'igcc_contribution_up_published')
+    peak_features(df,'min_price_published',negative=True)
+    peak_features(df,'max_price_published')
+    return df
 
 @app.command()
 def main(
@@ -139,6 +161,7 @@ def main(
         (add_price_volume, (), {}),
         (add_diff, (), {}),
         (add_time_features, (), {}),
+        (add_peak_features, (), {})
     ]
 
     logger.info("Generating features from dataset...")
