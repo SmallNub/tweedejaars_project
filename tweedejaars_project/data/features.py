@@ -106,7 +106,7 @@ def add_time_features(df: pd.DataFrame):
     df["month"] = df["datetime"].dt.month
     df["day"] = df["datetime"].dt.day
     df["hour"] = df["datetime"].dt.hour
-    df["minute"] = df["datetime"].dt.hour
+    df["minute"] = df["datetime"].dt.minute
     df["weekday"] = df["datetime"].dt.weekday
     df["weekday_ptu"] = df["weekday"] * 96 + df["PTU"]
     df["weekday_hour"] = df["weekday"] * 24 + df["hour"]
