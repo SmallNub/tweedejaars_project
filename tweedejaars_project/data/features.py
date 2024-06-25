@@ -115,7 +115,8 @@ def add_time_features(df: pd.DataFrame):
     logger.info("Added several time features. (<many>)")
     return df
 
-def peak_features(df,feature,negative=False):
+
+def peak_features(df: pd.DataFrame, feature: str, negative=False):
     if negative:
         df[f'{feature}_peak'] = (df[feature] >= df[feature].shift(1)) & (df[feature].shift(1) < df[feature].shift(2))
     else:
@@ -128,14 +129,16 @@ def peak_features(df,feature,negative=False):
     df['peak_values'] = df['peak_values'].ffill()
     df[f'{feature}_peak_diff'] = df[feature] - df['peak_values'].ffill()
 
+
 def add_peak_features(df: pd.DataFrame):
-    peak_features(df,'downward_dispatch_published')
-    peak_features(df,'upward_dispatch_published')
-    peak_features(df,'igcc_contribution_down_published')
-    peak_features(df,'igcc_contribution_up_published')
-    peak_features(df,'min_price_published',negative=True)
-    peak_features(df,'max_price_published')
+    peak_features(df, 'downward_dispatch_published')
+    peak_features(df, 'upward_dispatch_published')
+    peak_features(df, 'igcc_contribution_down_published')
+    peak_features(df, 'igcc_contribution_up_published')
+    peak_features(df, 'min_price_published', negative=True)
+    peak_features(df, 'max_price_published')
     return df
+
 
 @app.command()
 def main(
