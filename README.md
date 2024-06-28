@@ -9,53 +9,67 @@ Predicting price swings in electricity
 ## Project Organization
 
 ```
-├── LICENSE            <- Open-source license if one is chosen
 ├── Makefile           <- Makefile with convenience commands like `make data` or `make train`
+│
 ├── README.md          <- The top-level README for developers using this project.
+│
 ├── data
-│   ├── external       <- Data from third party sources.
 │   ├── interim        <- Intermediate data that has been transformed.
+│   │
 │   ├── processed      <- The final, canonical data sets for modeling.
+│   │
 │   └── raw            <- The original, immutable data dump.
 │
-├── docs               <- A default mkdocs project; see mkdocs.org for details
+├── models             <- Trained and serialized models.
 │
-├── models             <- Trained and serialized models, model predictions, or model summaries
-│
-├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-│                         the creator's initials, and a short `-` delimited description, e.g.
-│                         `1.0-jqp-initial-data-exploration`.
+├── notebooks          <- Jupyter notebooks.
 │
 ├── pyproject.toml     <- Project configuration file with package metadata for tweedejaars_project
 │                         and configuration for tools like black
 │
-├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-│
-├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-│   └── figures        <- Generated graphics and figures to be used in reporting
-│
-├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-│                         generated with `pip freeze > requirements.txt`
+├── environment.yml    <- The requirements file for reproducing the analysis environment, e.g.
+│                         generated with `conda env create -f environment.yml`
 │
 ├── setup.cfg          <- Configuration file for flake8
+│
+├── make_dataset.py    <- Simple wrapper script to process the data and generate features.
 │
 └── tweedejaars_project                <- Source code for use in this project.
     │
     ├── __init__.py    <- Makes tweedejaars_project a Python module
     │
-    ├── data           <- Scripts to download or generate data
-    │   └── make_dataset.py
+    ├── config.py      <- Configuration of the Python module
     │
-    ├── features       <- Scripts to turn raw data into features for modeling
-    │   └── build_features.py
+    ├── data           <- Scripts to manage data
+    │   │
+    │   ├── dataset.py                 <- Cleans and processes the data
+    │   │
+    │   ├── features.py                <- Creates new features
+    │   │
+    │   ├── fileloader.py              <- Scripts for loading and saving
+    │   │
+    │   └── split.py                   <- Splits the data into training, validation and testing
     │
-    ├── models         <- Scripts to train models and then use trained models to make
-    │   │                 predictions
-    │   ├── predict_model.py
-    │   └── train_model.py
+    ├── evaluation     <- Scripts to evaluate models and features
+    │   │
+    │   ├── adjustment.py              <- Script for adjusting predictions
+    │   │
+    │   ├── evaluate_model.py          <- High performance code for testing models and features
+    │   │
+    │   └── metrics.py                 <- Simple metrics and custom metrics
     │
-    └── visualization  <- Scripts to create exploratory and results oriented visualizations
-        └── visualize.py
+    ├── utility        <- Utility scripts
+    │   │
+    │   └── misc.py                    <- Script containing miscellaneous functions
+    │
+    └── visualization  <- Scripts to visualize the data and metrics
+        │
+        ├── analyse.py                 <- Script containing simple plotting functions
+        │
+        ├── plot_metrics.py            <- Plot the results of the metrics
+        │
+        └── visualize.py               <- Utility visualization functions
+
 ```
 
 --------
