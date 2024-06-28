@@ -99,3 +99,30 @@ def lag(df: pd.DataFrame, feature: str, amount=1):
     lagged_feature = f"{feature}_{amount}"
     df[lagged_feature] = df[feature].shift(amount)
     return df
+
+
+def to_category(df: pd.DataFrame, feature: str):
+    """Convert a feature in the dataframe to type `category`"""
+    df[feature] = df[feature].astype("category")
+    return df
+
+
+def to_bool(df: pd.DataFrame, feature: str):
+    """Convert a feature in the dataframe to type `bool`"""
+    df[feature] = df[feature].astype(bool)
+    return df
+
+
+def recast_categorical(df: pd.DataFrame, to_cat=True):
+    """Recast categorical features from type 'bool' to `category` or vice versa."""
+    features = [
+        "naive_strategy_action",
+        "workday",
+        "is_balanced"
+    ]
+
+    # Apply the corresponding function
+    func = to_category if to_cat else to_bool
+    for feature in features:
+        df = func(df, feature)
+    return df

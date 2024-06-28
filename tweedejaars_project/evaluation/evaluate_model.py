@@ -3,7 +3,7 @@ import numpy as np
 from joblib import Parallel, delayed
 
 from tweedejaars_project.evaluation.metrics import compute_income_score_added, compute_income_score_naive
-from tweedejaars_project.evaluation import adjust_pred_realtime, adjust_pred_consistency, adjust_pred_conform
+from tweedejaars_project.evaluation import adjust_pred_realtime
 
 
 def evaluate_income(
@@ -20,16 +20,10 @@ def evaluate_income(
     def step(train_in, train_out, test_in, realtime, action, price, naive):
         # Train
         model = train_func(train_in, train_out)
+
         # Test and adjust predictions
         pred_adj, pred = test_func(model, test_in)
         pred_adj = adjust_pred_realtime(realtime, pred_adj)
-
-        # Make consistent first (then conform (not relevant for income))
-        # pred_con = adjust_pred_consistency(pred)
-
-        # Make conform first then consistent
-        # pred = adjust_pred_conform(pred)
-        # pred_con2 = adjust_pred_consistency(pred)
 
         # Compute scores
         preds = [pred_adj]
@@ -68,6 +62,7 @@ def evaluate_income(
             best[:2] = out[i][:2]
             best[2] = out[i][3]
 
+    # Print the outputs
     for i in range(n_out):
         out[i][2] = pd.Series(out[i][2], name=str(i))
         print(out[i][2].describe())

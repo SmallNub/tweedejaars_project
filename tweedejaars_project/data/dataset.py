@@ -13,13 +13,14 @@ app = typer.Typer()
 
 
 def fix_target(df: pd.DataFrame) -> pd.DataFrame:
-    """Fix the target to be more correct and consistent."""
+    """Fix the target to be more correct and consistent. (NOTE this will replace the default)"""
     temp_df = pd.concat([df["datetime"], df["time_since_last_two_sided"]], axis=1)
     temp_df.columns = ["datetime", "time_since_last_two_sided"]
     temp_df = add_ids(temp_df)
     temp_df = add_realtime_target(temp_df)
     temp_df = add_fix_target(temp_df)
     df["target_two_sided_ptu"] = temp_df["fix_two_sided_ptu_realtime"]
+
     logger.info("Fixed the target.")
     return df
 
@@ -36,6 +37,7 @@ def fix_nan(df: pd.DataFrame):
         "forecast_demand",
     ]
     df[features] = df[features].ffill()
+
     logger.info("Fixed all the NaNs in some features.")
     return df
 
