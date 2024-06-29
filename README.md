@@ -14,6 +14,28 @@ Steven Dong \
 Tycho van Willigen
 
 
+## Prerequisites
+
+- <a target="_blank" href="https://docs.anaconda.com/miniconda/">Conda</a>
+- This repository.
+- Data provided by Eneco.
+
+
+## Instructions
+
+1. Place the raw data into the folder `data/raw`.
+2. Open the terminal in the same folder as this file.
+3. Run the make command `make create_environment` (might raise an error).
+   This will create a new conda environment.
+   - NOTE: this might take a very long time due to the amount of Python packages needed to be installed. \
+     If this process is interrupted, run the make command `make requirements`.
+   - If it raised an error, run `pip install python-dotenv` after step 4.
+4. Run the conda command `conda activate tweedejaars_project`.
+5. Run the pip command `pip install -e .`. This installs the package in an editable state.
+6. Run the make command `make data`. This will preprocess the data and generate new features.
+7. Navigate to the desired file using the Project Organization below.
+
+
 ## Project Organization
 
 ```
@@ -41,6 +63,11 @@ Tycho van Willigen
 │   ├── autoregressive_rnn.ipynb        <- Autoregressive RNN model for using the entire history.
 │   │
 │   ├── custom_loss.ipynb               <- Simple FNN using a custom loss function.
+│   │
+│   ├── eneco_deliverable.ipynb         <- The final deliverable in the requested format by Eneco.
+│   │                                      This file is made by combining all the code in the source code
+│   │                                      and `main_model.ipynb` into a singular massive file.
+│   │                                      This is not recommended, use `main_model.ipynb` instead.
 │   │
 │   ├── eneco_model.ipynb               <- A recreation of the model used by Eneco.
 │   │

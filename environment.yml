@@ -443,7 +443,6 @@ dependencies:
       - tensorboard-data-server==0.7.2
       - tensorflow==2.16.1
       - termcolor==2.4.0
-      - tweedejaars-project==0.0.1
       - werkzeug==3.0.3
       - wrapt==1.16.0
 prefix: /home/nub/miniconda3/envs/tweedejaars_project

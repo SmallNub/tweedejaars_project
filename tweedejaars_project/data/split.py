@@ -5,7 +5,7 @@ import pandas as pd
 VALID_PERCENTAGE = 0.25
 TEST_PERCENTAGE = 0.25
 
-# Target feature
+# Default target
 TARGET = "target_two_sided_ptu"
 
 # Default features
