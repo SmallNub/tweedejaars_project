@@ -6,6 +6,7 @@
 
 A machine learning approach to predict price swings in the electricity grid of the Netherlands.
 
+This project was made by: \
 Nordin el Assassi \
 Sakr Ismail \
 Simen Veenman \
