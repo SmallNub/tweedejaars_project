@@ -17,7 +17,7 @@ Tycho van Willigen
 ## Prerequisites
 
 - <a target="_blank" href="https://docs.anaconda.com/miniconda/">Conda</a>
-- This repository.
+- This GitHub repository.
 - Data provided by Eneco.
 
 
@@ -51,11 +51,11 @@ Tycho van Willigen
 │   │
 │   └── raw            <- The original, immutable data dump.
 │
-├── models             <- Trained and serialized models.
+├── models             <- Folder containing trained and serialized models.
 │
 ├── notebooks          <- Jupyter notebooks.
 │   │
-│   ├── legacy                          <- Folder containing Old notebooks.
+│   ├── legacy                          <- Folder containing old notebooks.
 │   │                                      Some may no longer run without changing the code manually.
 │   │
 │   ├── autoencoder.ipynb               <- Model for reconstructing data and detecting anomalies.
