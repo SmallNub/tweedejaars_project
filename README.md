@@ -71,7 +71,7 @@ and thus you may skip the following instructions.
 │   ├── eneco_deliverable.ipynb         <- The final deliverable in the requested format by Eneco.
 │   │                                      This file is made by combining all the code in the source code
 │   │                                      and `main_model.ipynb` into a singular massive file.
-│   │                                      This is not recommended, use `main_model.ipynb` instead.
+│   │                                      This file is not recommended, use `main_model.ipynb` instead.
 │   │
 │   ├── eneco_model.ipynb               <- A recreation of the model used by Eneco.
 │   │
