@@ -23,6 +23,10 @@ Tycho van Willigen
 
 ## Instructions
 
+Follow these instructions if you wish to run any file from the repository, except `eneco_deliverable.ipynb`.
+`eneco_deliverable.ipynb` is a standalone file and can work outside of this repository,
+and thus you may skip the following instructions.
+
 1. Place the raw data into the folder `data/raw`.
 2. Open the terminal in the same folder as this file.
 3. Run the make command `make create_environment` (might raise an error).
