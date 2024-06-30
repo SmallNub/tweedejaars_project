@@ -26,6 +26,8 @@ Tycho van Willigen
 Follow these instructions if you wish to run any file from the repository, except `eneco_deliverable.ipynb`.
 `eneco_deliverable.ipynb` is a standalone file and can work outside of this repository,
 and thus you may skip the following instructions.
+However, `eneco_deliverable.ipynb` requires the pickle file of the model and the data to be in the same folder.
+This requires you to move `models/main_model/hgbr.pkl` to `notebooks/` and the data to be present in `notebooks/` aswell.
 
 1. Place the raw data into the folder `data/raw`.
 2. Open the terminal in the same folder as this file.
